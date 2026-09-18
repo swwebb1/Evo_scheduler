@@ -9,408 +9,499 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#11151c;--surface:#161b23;--surface-2:#1c222c;--surface-3:#232a35;
-  --line:#2b333f;--line-strong:#3a4453;--text:#e7ecf3;--text-dim:#9aa7b8;--text-faint:#657186;
-  --accent:#7c83ff;--accent-press:#6b72f0;--accent-soft:#7c83ff22;
-  --warn:#e0a53a;--ok:#4bb585;--danger:#e5654a;
-  --radius:10px;--radius-sm:7px;--shadow:0 6px 24px -12px #000a,0 2px 6px -4px #0008;
+  --bg:#10141b;--surface:#171d26;--surface-2:#1e2530;--surface-3:#28303c;
+  --line:#2c343f;--line-strong:#3b4552;--text:#eaeff6;--text-dim:#9aa7b8;--text-faint:#66727f;
+  --accent:#7c83ff;--accent-press:#6b72f0;--accent-soft:#7c83ff1f;
+  --warm:#d97b34;--warm-soft:#d97b3422;--ok:#4bb585;--danger:#e5654a;
+  --r:14px;--r-sm:10px;--shadow:0 10px 30px -16px #000b,0 2px 8px -4px #0009;
   font-feature-settings:"tnum" 1;
 }
 :root[data-theme="light"]{
-  --bg:#eef1f5;--surface:#fff;--surface-2:#f4f6f9;--surface-3:#eaeef3;
-  --line:#dfe4ea;--line-strong:#c8d0da;--text:#1c2530;--text-dim:#55616f;--text-faint:#8a95a3;
-  --accent:#5a61e6;--accent-press:#4a51d6;--accent-soft:#5a61e618;
-  --shadow:0 8px 24px -16px #35415510,0 1px 3px #3541550f;
+  --bg:#eef1f5;--surface:#fff;--surface-2:#f5f7fa;--surface-3:#e9edf2;
+  --line:#e2e6ec;--line-strong:#ccd3dd;--text:#182029;--text-dim:#586675;--text-faint:#93a0af;
+  --accent:#5a61e6;--accent-press:#4a51d6;--accent-soft:#5a61e614;--warm-soft:#d97b3418;
+  --shadow:0 12px 30px -18px #35415522,0 1px 3px #3541550f;
 }
 *{box-sizing:border-box}html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--text);
-  font:400 14px/1.45 "Inter",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
-button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
-input,select{font:inherit;color:inherit}.tnum{font-variant-numeric:tabular-nums}
-.app{display:grid;grid-template-rows:auto 1fr;height:100dvh}
-header.top{display:flex;align-items:center;gap:14px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
-.brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.01em;font-size:15px}
-.brand .glyph{width:26px;height:26px;border-radius:7px;flex:0 0 auto;background:linear-gradient(150deg,#2f5ea8,#d97b34 78%);box-shadow:inset 0 0 0 1px #ffffff22}
-.conn{display:inline-flex;align-items:center;gap:7px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:500;background:var(--surface-3);color:var(--text-dim);border:1px solid var(--line)}
-.conn .dot{width:7px;height:7px;border-radius:50%;background:var(--warn)}
-.conn.live .dot{background:var(--ok)}.conn.err .dot{background:var(--danger)}
-.spacer{flex:1}
-.iconbtn{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;color:var(--text-dim);border:1px solid transparent}
-.iconbtn:hover{background:var(--surface-2);color:var(--text)}.iconbtn svg{width:18px;height:18px}
-main{display:grid;grid-template-columns:210px 1fr;min-height:0}
-.rail{background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;overflow:auto}
-.rail h2{margin:0;padding:14px 16px 8px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint)}
-.rail .grp+.grp{border-top:1px solid var(--line)}
-.zone,.libitem{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 16px;color:var(--text-dim);border-left:2px solid transparent}
-.zone:hover,.libitem:hover{background:var(--surface-2);color:var(--text)}
-.zone.sel,.libitem.sel{background:var(--accent-soft);color:var(--text);border-left-color:var(--accent)}
-.zone .swatch{width:9px;height:9px;border-radius:2px;flex:0 0 auto;background:var(--line-strong)}
-.zone .nm,.libitem .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
-.zone .now{font-size:12px;color:var(--text-faint);font-variant-numeric:tabular-nums}
-.libitem .tag{font-size:11px;color:var(--text-faint)}
-.libitem .del{opacity:0;color:var(--text-faint);padding:2px 6px;border-radius:6px}
-.libitem:hover .del{opacity:1}.libitem .del:hover{color:var(--danger);background:var(--surface-3)}
-.rail .add{margin:8px 12px 14px;padding:8px;border:1px dashed var(--line-strong);border-radius:8px;color:var(--text-dim);font-weight:500;font-size:13px}
-.rail .add:hover{color:var(--text);border-color:var(--accent)}
-.editor{min-height:0;overflow:auto;padding:18px 20px 120px}
-.zhead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:4px}
-.zhead h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.02em}
-.zhead .kind{font-size:13px;color:var(--text-faint);font-weight:500}
-.dirty{font-size:12px;color:var(--warn);font-weight:600;display:none}.dirty.on{display:inline}
-.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0 18px;padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
-.field{display:flex;flex-direction:column;gap:4px}
-.field label{font-size:11px;color:var(--text-faint);font-weight:600;letter-spacing:.03em}
-.sel{appearance:none;padding:8px 30px 8px 11px;background:var(--surface-3);border:1px solid var(--line-strong);border-radius:8px;font-weight:500;min-width:170px;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%239aa7b8' stroke-width='2'%3E%3Cpath d='M2 4l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
-.btn{padding:8px 13px;border-radius:8px;background:var(--surface-3);border:1px solid var(--line-strong);font-weight:500;color:var(--text);white-space:nowrap}
-.btn:hover{border-color:var(--accent)}.btn.ghost{background:transparent}
+  font:400 15px/1.45 "Inter",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;text-align:left}
+.tnum{font-variant-numeric:tabular-nums}
+.app{max-width:520px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;position:relative}
+@media(min-width:560px){.app{padding:0 8px}}
+
+/* header */
+.top{display:flex;align-items:center;gap:12px;padding:16px 18px 8px}
+.top .title{font-weight:700;font-size:19px;letter-spacing:-.02em;flex:1;display:flex;align-items:center;gap:9px}
+.glyph{width:26px;height:26px;border-radius:8px;background:linear-gradient(150deg,#2f5ea8,#d97b34 80%);box-shadow:inset 0 0 0 1px #ffffff22}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--warm)}
+.dot.ok{background:var(--ok)}.dot.err{background:var(--danger)}
+.iconbtn{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:var(--text-dim)}
+.iconbtn:hover{background:var(--surface-2);color:var(--text)}.iconbtn svg{width:19px;height:19px}
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--text-dim);font-weight:600;padding:6px 4px}
+.back:hover{color:var(--text)}
+
+main{flex:1;padding:8px 18px 40px;min-height:0}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text-faint);margin:22px 2px 10px}
+.eyebrow:first-child{margin-top:8px}
+
+/* current plan */
+.now{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;box-shadow:var(--shadow)}
+.now .lbl{font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text-faint)}
+.now .plan{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:2px 0 3px}
+.now .sub{color:var(--text-dim);font-size:13.5px}
+
+/* plan cards */
+.plan-card{display:flex;align-items:center;gap:14px;width:100%;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);padding:16px 16px;margin-bottom:10px;transition:.12s}
+.plan-card:active{transform:scale(.99)}
+.plan-card:hover{border-color:var(--line-strong)}
+.plan-card .swatch{width:10px;height:38px;border-radius:5px;flex:0 0 auto}
+.plan-card .nm{flex:1;font-weight:600;font-size:17px}
+.plan-card .meta{color:var(--text-faint);font-size:13px}
+.plan-card .chev{color:var(--text-faint)}
+
+/* quick boost */
+.boost{display:flex;align-items:center;gap:14px;width:100%;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--r);padding:14px 16px;margin-bottom:10px}
+.boost:active{transform:scale(.99)}
+.boost .ic{width:34px;height:34px;border-radius:9px;background:var(--warm-soft);color:var(--warm);display:grid;place-items:center;flex:0 0 auto}
+.boost .ic svg{width:18px;height:18px}
+.boost .nm{flex:1;font-weight:600}
+.boost .meta{color:var(--warm);font-weight:600;font-size:14px;font-variant-numeric:tabular-nums}
+.linkbtn{display:block;width:100%;text-align:center;color:var(--text-dim);font-weight:600;padding:12px;border:1px dashed var(--line-strong);border-radius:var(--r);margin-top:2px}
+.linkbtn:hover{color:var(--text);border-color:var(--accent)}
+
+/* rooms now */
+.rooms{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.room{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--line)}
+.room:first-child{border-top:0}
+.room .rn{flex:1;font-weight:500}
+.room .temps{font-variant-numeric:tabular-nums;color:var(--text-dim);font-size:14px}
+.room .temps b{color:var(--text)}
+.badge{font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px}
+.badge.boost{background:var(--warm-soft);color:var(--warm)}
+.badge.hold{background:var(--accent-soft);color:var(--accent)}
+
+.foot{margin-top:26px;display:flex;flex-direction:column;gap:10px}
+.foot .row{display:flex;gap:10px}
+.btn{flex:1;text-align:center;padding:13px;border-radius:var(--r);background:var(--surface-2);
+  border:1px solid var(--line-strong);font-weight:600;color:var(--text)}
+.btn:hover{border-color:var(--accent)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-.btn.primary:hover{background:var(--accent-press);border-color:var(--accent-press)}
-.btn:disabled{opacity:.45;cursor:not-allowed;border-color:var(--line-strong)}
-.tb-right{margin-left:auto;display:flex;gap:8px}
-.week{display:flex;flex-direction:column;gap:7px}
-.day{display:grid;grid-template-columns:44px 1fr;align-items:center;gap:12px;padding:7px 10px;border-radius:9px;border:1px solid transparent;cursor:pointer}
-.day:hover{background:var(--surface)}.day.sel{background:var(--surface);border-color:var(--line-strong)}
-.day .dname{font-weight:600;font-size:13px;color:var(--text-dim)}.day.sel .dname{color:var(--text)}
-.bar{position:relative;height:34px;border-radius:6px;overflow:hidden;background:var(--surface-3);box-shadow:inset 0 0 0 1px var(--line)}
-.seg{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#0d1117cc;text-shadow:0 1px 0 #ffffff30;overflow:hidden}
-.seg.dark{color:#f4f7fbdd;text-shadow:0 1px 1px #0006}
-.tick{position:absolute;top:0;bottom:0;width:1px;background:#0e131b40}:root[data-theme="light"] .tick{background:#00000018}
-.axis{display:grid;grid-template-columns:44px 1fr;gap:12px;margin-top:2px;color:var(--text-faint);font-size:10.5px}
-.axis .marks{display:flex;justify-content:space-between}
-.dayedit{margin-top:20px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
-.dayedit-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.dayedit-head h3{margin:0;font-size:15px;font-weight:600}.dayedit-head .count{font-size:12px;color:var(--text-faint)}.dayedit-head .count.over{color:var(--warn)}
-.sp-list{display:flex;flex-direction:column;gap:8px}
-.sp{display:grid;grid-template-columns:16px 118px 1fr 34px;align-items:center;gap:10px;padding:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px}
-.sp .chip{width:12px;height:24px;border-radius:4px}
-.sp input[type=time]{padding:7px 8px;background:var(--surface-3);border:1px solid var(--line-strong);border-radius:7px;font-variant-numeric:tabular-nums;width:100%}
-.temp{display:flex;align-items:center;gap:10px}.temp input[type=range]{flex:1;accent-color:var(--accent)}
-.temp .val{min-width:58px;text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
-.dhwtoggle{display:inline-flex;border:1px solid var(--line-strong);border-radius:8px;overflow:hidden}
-.dhwtoggle button{padding:7px 16px;font-weight:600;color:var(--text-dim)}
-.dhwtoggle button.on[data-v=On]{background:var(--warn);color:#1a130a}
-.dhwtoggle button.on[data-v=Off]{background:var(--surface-3);color:var(--text)}
-.rm{color:var(--text-faint);border-radius:7px;height:32px}.rm:hover{color:var(--danger);background:var(--surface-3)}
-.dayedit-foot{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
-.copy{display:flex;align-items:center;gap:8px;margin-left:auto;color:var(--text-dim);font-size:13px}
-.commit{position:fixed;left:210px;right:0;bottom:0;display:flex;align-items:center;gap:14px;padding:12px 20px;background:linear-gradient(0deg,var(--surface),var(--surface) 70%,transparent);border-top:1px solid var(--line)}
-.commit .note{color:var(--text-dim);font-size:13px}.commit .note b{color:var(--text)}
-.commit .right{margin-left:auto;display:flex;gap:10px}
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface-3);border:1px solid var(--line-strong);color:var(--text);padding:11px 16px;border-radius:10px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s;z-index:60;max-width:90vw;font-weight:500}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}.toast.ok{border-color:#4bb58555}.toast.err{border-color:#e5654a66}
-.scrim{position:fixed;inset:0;background:#0009;display:none;place-items:center;z-index:70;padding:20px}.scrim.show{display:grid}
-.modal{background:var(--surface);border:1px solid var(--line-strong);border-radius:14px;box-shadow:var(--shadow);width:min(440px,100%);padding:20px}
-.modal h3{margin:0 0 6px;font-size:17px}.modal p{margin:0 0 16px;color:var(--text-dim);font-size:13.5px;line-height:1.5}
-.modal .warnrow{display:flex;gap:10px;padding:11px;background:#e0a53a12;border:1px solid #e0a53a44;border-radius:9px;margin:0 0 16px;font-size:13px;color:var(--text)}
-.modal input[type=text]{width:100%;padding:10px 12px;background:var(--surface-3);border:1px solid var(--line-strong);border-radius:9px;margin-bottom:16px}
-.modal .actions{display:flex;justify-content:flex-end;gap:10px}
-.blocker{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:30px;color:var(--text-dim)}
-@media (max-width:820px){
-  main{grid-template-columns:1fr;grid-template-rows:auto 1fr}
-  .rail{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}
-  .rail .grp{display:flex;align-items:center}.rail h2{padding:12px 8px 12px 16px}.rail .add{margin:8px}
-  .zone,.libitem{width:auto;border-left:0;border-bottom:2px solid transparent}
-  .zone.sel,.libitem.sel{border-left:0;border-bottom-color:var(--accent)}
-  .commit{left:0}.sp{grid-template-columns:12px 96px 1fr 30px}
-}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.btn.primary:hover{background:var(--accent-press)}
+.btn.warm{background:var(--warm);border-color:var(--warm);color:#150d05}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--danger);border-color:transparent}
+.btn:disabled{opacity:.5}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:#0009;display:none;align-items:flex-end;justify-content:center;z-index:50}
+.scrim.show{display:flex}
+@media(min-width:560px){.scrim{align-items:center}}
+.sheet{background:var(--surface);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:20px 18px 24px;
+  box-shadow:var(--shadow);max-height:88dvh;overflow:auto}
+@media(min-width:560px){.sheet{border-radius:20px}}
+.sheet h2{margin:2px 0 3px;font-size:20px}
+.sheet .sub{color:var(--text-dim);font-size:13.5px;margin-bottom:16px}
+.chips{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:18px}
+.chip{padding:9px 14px;border-radius:999px;background:var(--surface-3);border:1px solid var(--line-strong);
+  font-weight:600;font-size:14px;color:var(--text-dim);user-select:none}
+.chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--text)}
+.chip .tick{color:var(--accent);margin-right:5px;font-weight:700}
+.sheet-actions{display:flex;gap:10px;margin-top:6px}
+
+/* form bits */
+.field{margin-bottom:16px}
+.field>label{display:block;font-size:12px;font-weight:600;letter-spacing:.03em;color:var(--text-faint);margin-bottom:7px}
+input[type=text]{width:100%;padding:12px 13px;background:var(--surface-3);border:1px solid var(--line-strong);border-radius:var(--r-sm);color:var(--text);font:inherit}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{padding:9px 14px;border-radius:999px;background:var(--surface-3);border:1px solid var(--line-strong);font-weight:600;color:var(--text-dim)}
+.seg button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.temprow{display:flex;align-items:center;gap:14px}
+.temprow input[type=range]{flex:1;accent-color:var(--warm)}
+.temprow .v{min-width:64px;text-align:right;font-weight:700;font-size:18px;font-variant-numeric:tabular-nums}
+
+/* editor */
+.selrow{display:flex;gap:10px;margin-bottom:16px}
+.sel{flex:1;appearance:none;padding:11px 32px 11px 12px;background:var(--surface-2);border:1px solid var(--line-strong);
+  border-radius:var(--r-sm);font-weight:600;color:var(--text);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%239aa7b8' stroke-width='2'%3E%3Cpath d='M2 4l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center}
+.week{display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
+.day{display:grid;grid-template-columns:38px 1fr;align-items:center;gap:10px;padding:5px 6px;border-radius:9px;border:1px solid transparent}
+.day.sel{background:var(--surface);border-color:var(--line-strong)}
+.day .dn{font-weight:600;font-size:12px;color:var(--text-dim)}
+.bar{position:relative;height:30px;border-radius:6px;overflow:hidden;background:var(--surface-3);box-shadow:inset 0 0 0 1px var(--line)}
+.seg2{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#0d1117cc;overflow:hidden}
+.seg2.d{color:#f4f7fbdd}
+.axis{display:grid;grid-template-columns:38px 1fr;gap:10px;margin:1px 0 14px;color:var(--text-faint);font-size:10px}
+.axis .m{display:flex;justify-content:space-between}
+.deday{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.deday h3{margin:0 0 10px;font-size:15px}
+.sp{display:grid;grid-template-columns:14px 104px 1fr 30px;align-items:center;gap:9px;padding:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;margin-bottom:7px}
+.sp .c{width:11px;height:22px;border-radius:4px}
+.sp input[type=time]{padding:7px;background:var(--surface-3);border:1px solid var(--line-strong);border-radius:7px;color:var(--text);font:inherit;font-variant-numeric:tabular-nums;width:100%}
+.sp .t{display:flex;align-items:center;gap:8px}
+.sp .t input{flex:1;accent-color:var(--accent)}
+.sp .t .val{min-width:52px;text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.sp .rm{color:var(--text-faint);text-align:center;border-radius:7px;height:30px}
+.sp .rm:hover{color:var(--danger);background:var(--surface-3)}
+.defoot{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.copy{margin-left:auto;color:var(--text-dim);font-size:13px;display:flex;gap:6px;align-items:center}
+
+.empty{text-align:center;color:var(--text-dim);padding:40px 20px}
+.empty b{color:var(--text)}
+.list-item{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:10px}
+.list-item .nm{flex:1;font-weight:600}
+.list-item .meta{color:var(--text-faint);font-size:13px}
+.list-item .edit{color:var(--accent);font-weight:600;font-size:14px}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--surface-3);
+  border:1px solid var(--line-strong);color:var(--text);padding:12px 16px;border-radius:12px;box-shadow:var(--shadow);
+  opacity:0;pointer-events:none;transition:.25s;z-index:80;max-width:92vw;display:flex;align-items:center;gap:14px;font-weight:500}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.toast.ok{border-color:#4bb58555}.toast.err{border-color:#e5654a66}
+.toast .undo{color:var(--accent);font-weight:700;white-space:nowrap}
+.spin{width:16px;height:16px;border:2px solid #fff5;border-top-color:#fff;border-radius:50%;display:inline-block;animation:sp .7s linear infinite;vertical-align:-3px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
 <div class="app">
-  <header class="top">
-    <div class="brand"><span class="glyph"></span> Evo Scheduler</div>
-    <span class="conn" id="conn"><span class="dot"></span><span id="connText">Connecting…</span></span>
-    <span class="spacer"></span>
-    <button class="iconbtn" id="refresh" title="Reload live schedule"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/></svg></button>
-    <button class="iconbtn" id="theme" title="Toggle light / dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
-  </header>
-  <main>
-    <nav class="rail">
-      <div class="grp"><h2>Zones</h2><div id="zoneList"></div></div>
-      <div class="grp"><h2>Schedule library</h2><div id="libList"></div>
-        <button class="add" id="newLib">+ New alternate schedule</button></div>
-    </nav>
-    <section class="editor" id="editor">
-      <div class="zhead"><h1 id="zoneName">—</h1><span class="kind" id="zoneKind"></span><span class="dirty" id="dirty">● unsaved edits</span></div>
-      <div class="toolbar">
-        <div class="field"><label for="src">Load into editor</label><select class="sel" id="src"></select></div>
-        <button class="btn" id="pullLive" title="Copy the live schedule into the editor">Pull live ↓</button>
-        <div class="tb-right"><button class="btn" id="revert">Revert</button><button class="btn" id="saveLib">Save to library…</button></div>
-      </div>
-      <div class="week" id="week"></div>
-      <div class="axis"><span></span><div class="marks" id="axis"></div></div>
-      <div class="dayedit" id="dayEdit" hidden>
-        <div class="dayedit-head"><h3 id="deTitle">Monday</h3><span class="count" id="deCount"></span></div>
-        <div class="sp-list" id="spList"></div>
-        <div class="dayedit-foot"><button class="btn" id="addSp">+ Add switchpoint</button>
-          <div class="copy">Copy this day to
-            <select class="sel" id="copyTarget" style="min-width:150px">
-              <option value="">choose…</option><option value="weekdays">Mon–Fri</option>
-              <option value="weekend">Sat–Sun</option><option value="all">Every day</option></select></div></div>
-      </div>
-    </section>
-  </main>
-  <div class="commit">
-    <div class="note" id="commitNote"></div>
-    <div class="right"><button class="btn primary" id="pushLive">Push this zone to Live</button></div>
+  <div class="top">
+    <button class="back" id="back" style="display:none">‹ Back</button>
+    <div class="title"><span class="glyph"></span><span id="ttl">Evo Scheduler</span></div>
+    <span class="dot" id="dot" title="connection"></span>
+    <button class="iconbtn" id="refresh" title="Refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/></svg></button>
+    <button class="iconbtn" id="theme" title="Light / dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
   </div>
+  <main id="main"></main>
 </div>
+
+<div class="scrim" id="scrim"><div class="sheet" id="sheet"></div></div>
 <div class="toast" id="toast"></div>
-<div class="scrim" id="scrim"><div class="modal" id="modal"></div></div>
 
 <script>
-/* API base = this document's directory, so it works behind HA ingress
-   (…/hassio_ingress/<token>/) and if opened directly. */
-const BASE = new URL(".", location.href).href;
-const api = p => BASE + p.replace(/^\//,"");
-
-const DAYS=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-const DAY_FULL={Mon:"Monday",Tue:"Tuesday",Wed:"Wednesday",Thu:"Thursday",Fri:"Friday",Sat:"Saturday",Sun:"Sunday"};
-const THERMAL=[[5,"#2f5ea8"],[11,"#3f8fb0"],[15,"#6d8598"],[17.5,"#cf9a4a"],[20,"#d97b34"],[23,"#c8503a"],[26,"#b23327"]];
-const OFF_COLOR="#33465e";
-const hex=c=>[parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)];
-function tempColor(t){
-  if(t==null)return OFF_COLOR;
-  if(t<=THERMAL[0][0])return THERMAL[0][1];
-  if(t>=THERMAL.at(-1)[0])return THERMAL.at(-1)[1];
-  for(let i=0;i<THERMAL.length-1;i++){const[t0,c0]=THERMAL[i],[t1,c1]=THERMAL[i+1];
-    if(t>=t0&&t<=t1){const f=(t-t0)/(t1-t0),a=hex(c0),b=hex(c1);
-      return`rgb(${a.map((v,k)=>Math.round(v+(b[k]-v)*f)).join(",")})`}}
-  return THERMAL[0][1];
-}
-const segColor=(sp,type)=>type==="dhw"?(sp.state==="On"?"#d97b34":OFF_COLOR):tempColor(sp.temp);
-function isDark(c){const m=c.match(/\d+/g);if(!m)return false;const[r,g,b]=m.map(Number);return .299*r+.587*g+.114*b<140}
-const segLabel=(sp,type)=>type==="dhw"?sp.state:sp.temp.toFixed(1)+"°";
-const toMin=t=>{const[h,m]=t.split(":").map(Number);return h*60+m};
-const sortSp=l=>[...l].sort((a,b)=>toMin(a.time)-toMin(b.time));
-const clone=o=>JSON.parse(JSON.stringify(o));
-
-/* ---------- API ---------- */
-async function jget(p){const r=await fetch(api(p));if(!r.ok)throw new Error(await r.text()||r.status);return r.json()}
-async function jsend(p,method,body){const r=await fetch(api(p),{method,headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
-  if(!r.ok){let m=r.status;try{m=(await r.json()).detail||m}catch{}throw new Error(m)}return r.json()}
+const BASE=new URL(".",location.href).href, api=p=>BASE+p.replace(/^\//,"");
+async function jget(p){const r=await fetch(api(p));if(!r.ok)throw new Error((await r.text())||r.status);return r.json()}
+async function jsend(p,m,b){const r=await fetch(api(p),{method:m,headers:{"Content-Type":"application/json"},body:JSON.stringify(b)});
+  if(!r.ok){let e=r.status;try{e=(await r.json()).detail||e}catch{}throw new Error(e)}return r.json()}
 const API={
-  status:()=>jget("status"),
-  zones:()=>jget("zones"),
+  status:()=>jget("status"), zones:()=>jget("zones"), library:()=>jget("library"),
+  shortcuts:()=>jget("shortcuts"), saveShortcuts:s=>jsend("shortcuts","PUT",s),
+  apply:(libraryId,zoneIds)=>jsend("apply","POST",{libraryId,zoneIds}),
+  boost:(zoneIds,temp,minutes)=>jsend("boost","POST",{zoneIds,temp,minutes}),
+  cancel:zoneIds=>jsend("cancel","POST",{zoneIds}),
   live:id=>jget(`zones/${encodeURIComponent(id)}/live`),
   push:(id,schedule)=>jsend(`zones/${encodeURIComponent(id)}/push`,"POST",{schedule}),
-  getLibrary:()=>jget("library"),
-  putLibrary:lib=>jsend("library","PUT",lib),
+  saveLibrary:l=>jsend("library","PUT",l),
 };
 
-/* ---------- state ---------- */
-const state={zones:[],library:[],zoneId:null,working:{},baseline:{},sourceLabel:{},selDay:"Mon"};
-const $=s=>document.querySelector(s);
-const el=(t,c,txt)=>{const e=document.createElement(t);if(c)e.className=c;if(txt!=null)e.textContent=txt;return e};
-const zone=id=>state.zones.find(z=>z.id===id);
-const cur=()=>state.working[state.zoneId];
+/* helpers */
+const $=s=>document.querySelector(s), el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
+const DAYS=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"], DFULL={Mon:"Monday",Tue:"Tuesday",Wed:"Wednesday",Thu:"Thursday",Fri:"Friday",Sat:"Saturday",Sun:"Sunday"};
+const clone=o=>JSON.parse(JSON.stringify(o));
+const fmtT=t=>Number.isFinite(t)?(t%1?t.toFixed(1):t.toFixed(0))+"°":"–";
+const fmtDur=m=>m%60===0?`${m/60}h`:`${m}m`;
+const toMin=t=>{const[h,m]=t.split(":").map(Number);return h*60+m}, sortSp=l=>[...l].sort((a,b)=>toMin(a.time)-toMin(b.time));
+function whenText(iso){if(!iso)return"";const d=new Date(iso),n=new Date();const day=d.toDateString()===n.toDateString()?"today":d.toLocaleDateString([], {weekday:"short"});
+  return `${day} ${d.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}`}
+function hhmm(iso){try{return new Date(iso).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}catch{return""}}
+const THERMAL=[[5,"#2f5ea8"],[11,"#3f8fb0"],[15,"#6d8598"],[17.5,"#cf9a4a"],[20,"#d97b34"],[23,"#c8503a"],[26,"#b23327"]];
+const hx=c=>[parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)];
+function tempColor(t){if(t==null)return"#33465e";if(t<=THERMAL[0][0])return THERMAL[0][1];if(t>=THERMAL.at(-1)[0])return THERMAL.at(-1)[1];
+  for(let i=0;i<THERMAL.length-1;i++){const[a,ca]=THERMAL[i],[b,cb]=THERMAL[i+1];if(t>=a&&t<=b){const f=(t-a)/(b-a),A=hx(ca),B=hx(cb);return`rgb(${A.map((v,k)=>Math.round(v+(B[k]-v)*f)).join(",")})`}}return THERMAL[0][1]}
+const dark=c=>{const m=c.match(/\d+/g);return m?(.299*m[0]+.587*m[1]+.114*m[2])<140:false};
 
-/* ---------- boot ---------- */
+/* state */
+const S={zmap:{}, library:[], shortcuts:[], status:null, lastBoost:null,
+  ed:{plan:null,zone:null,work:null,base:null,day:"Mon"}, scEdit:null};
+let stack=["home"];
+
+/* boot */
 init();
 async function init(){
-  const saved=localStorage.getItem("evo-theme");
-  if(saved)document.documentElement.dataset.theme=saved;
-  else if(matchMedia("(prefers-color-scheme:light)").matches)document.documentElement.dataset.theme="light";
-  wireGlobal();
+  const th=localStorage.getItem("evo-theme");
+  if(th)document.documentElement.dataset.theme=th; else if(matchMedia("(prefers-color-scheme:light)").matches)document.documentElement.dataset.theme="light";
+  $("#theme").onclick=()=>{const r=document.documentElement,n=r.dataset.theme==="light"?"":"light";if(n)r.dataset.theme=n;else r.removeAttribute("data-theme");localStorage.setItem("evo-theme",n)};
+  $("#refresh").onclick=()=>refreshAll(true);
+  $("#back").onclick=()=>{stack.pop();render()};
+  $("#scrim").onclick=e=>{if(e.target===$("#scrim"))closeSheet()};
+  await refreshAll();
+}
+async function refreshAll(spin){
   try{
-    const [st,zones,lib]=await Promise.all([API.status(),API.zones(),API.getLibrary()]);
-    setConn(st.connected);
-    if(!zones.length)return blocker("Connected, but no zones were returned. Check the location index in the add-on options.");
-    state.zones=zones;state.library=lib||[];
-    renderLib();
-    await selectZone(zones[0].id);
-  }catch(err){
-    setConn(false,true);
-    blocker(`Can’t reach Evohome.<br><span style="color:var(--text-faint)">${(err.message||err)}</span><br><br>Check the add-on log and that your TCC username / password are set in the add-on configuration.`);
+    if(spin)toast("Refreshing…");
+    const [zs,lib,sc,st]=await Promise.all([API.zones(),API.library(),API.shortcuts(),API.status()]);
+    S.zmap={}; zs.forEach(z=>S.zmap[z.id]=z);
+    S.library=lib||[]; S.shortcuts=sc||[]; S.status=st;
+    setDot(st.connected);
+    render();
+  }catch(err){ setDot(false,true); renderError(err.message||err); }
+}
+function setDot(ok,err){const d=$("#dot");d.className="dot"+(ok?" ok":err?" err":"")}
+const zname=id=>S.zmap[id]?.name||id;
+
+/* router */
+function go(v){stack.push(v);render()}
+function render(){
+  const v=stack.at(-1);
+  $("#back").style.display=stack.length>1?"inline-flex":"none";
+  $("#ttl").textContent={home:"Evo Scheduler",boosts:"Quick boosts",editor:"Edit schedules"}[v]||"Evo Scheduler";
+  ({home:renderHome,boosts:renderBoosts,editor:renderEditor}[v]||renderHome)();
+}
+function renderError(msg){
+  $("#main").innerHTML=`<div class="empty">Can’t reach Evohome.<br><span style="color:var(--text-faint)">${msg}</span><br><br>Check the add-on log and your TCC login.</div>`;
+}
+
+/* ---------------- HOME ---------------- */
+function renderHome(){
+  const m=$("#main");m.innerHTML="";const st=S.status||{};
+  // current plan
+  const now=el("div","now");
+  const plan=st.plan;
+  now.append(el("div","lbl","Current plan"));
+  now.append(el("div","plan",plan?.name||"Not set"));
+  now.append(el("div","sub",plan?`applied ${whenText(plan.appliedAt)} · ${plan.zoneCount} room${plan.zoneCount!==1?"s":""}`:"Pick a plan below to get started"));
+  m.append(now);
+
+  // switch plan
+  m.append(el("div","eyebrow","Switch plan"));
+  S.library.forEach(L=>{
+    const c=el("button","plan-card");
+    const sw=el("span","swatch");const zs=Object.keys(L.schedules||{});
+    // swatch colour ~ midday temp of first zone Mon
+    const z0=zs[0]; const sp0=z0&&activeAt((L.schedules[z0].Mon||[]),720); sw.style.background=sp0?tempColor(sp0.temp):"#33465e";
+    c.append(sw,el("span","nm",L.name),el("span","meta",`${zs.length} room${zs.length!==1?"s":""}`),el("span","chev","›"));
+    c.onclick=()=>applySheet(L);
+    m.append(c);
+  });
+  if(!S.library.length)m.append(el("div","empty","No saved plans yet."));
+
+  // quick boost
+  m.append(el("div","eyebrow","Quick boost"));
+  S.shortcuts.forEach(sc=>{
+    const b=el("button","boost");
+    const ic=el("span","ic");ic.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>';
+    b.append(ic,el("span","nm",sc.name),el("span","meta",`${fmtT(sc.temp)} · ${fmtDur(sc.minutes)}`));
+    b.onclick=()=>fireBoost(sc);
+    m.append(b);
+  });
+  const eb=el("button","linkbtn","Edit boosts");eb.onclick=()=>go("boosts");m.append(eb);
+
+  // rooms now
+  const zones=(st.zones||[]).filter(z=>z.type!=="dhw");
+  if(zones.length){
+    m.append(el("div","eyebrow","Rooms now"));
+    const box=el("div","rooms");
+    zones.forEach(z=>{
+      const r=el("div","room");
+      r.append(el("span","rn",z.name));
+      const md=(z.mode||"").toLowerCase();
+      if(md.includes("tempor"))r.append(badge("boost","boost"+(z.until?" til "+hhmm(z.until):"")));
+      else if(md.includes("perman"))r.append(badge("hold","held"));
+      const t=el("span","temps");t.innerHTML=`<b>${fmtT(z.current)}</b> → ${fmtT(z.target)}`;
+      r.append(t);box.append(r);
+    });
+    m.append(box);
   }
-}
-function setConn(ok,error){
-  const c=$("#conn");c.className="conn"+(ok?" live":error?" err":"");
-  $("#connText").textContent=ok?"Live · TCC":error?"Not connected":"Connecting…";
-}
-function blocker(html){$("#editor").innerHTML=`<div class="blocker"><div>${html}</div></div>`}
 
-/* ---------- rails ---------- */
-function renderZones(){
-  const box=$("#zoneList");box.innerHTML="";
-  state.zones.forEach(z=>{
-    const b=el("button","zone"+(z.id===state.zoneId?" sel":""));
-    const sw=el("span","swatch");
-    b.append(sw,el("span","nm",z.name),el("span","now tnum",""));
-    b.onclick=()=>selectZone(z.id);box.append(b);
-    // colour swatch from the working copy if loaded, else leave neutral
-    const w=state.working[z.id];
-    if(w){const sp=activeAt(w[state.selDay]||[],720);if(sp){sw.style.background=segColor(sp,z.type);b.querySelector(".now").textContent=segLabel(sp,z.type)}}
+  // footer
+  const foot=el("div","foot");
+  const e1=el("button","btn ghost","Edit schedules");e1.onclick=()=>go("editor");
+  foot.append(e1);m.append(foot);
+}
+function badge(kind,txt){const b=el("span","badge "+kind,txt);return b}
+function activeAt(list,min){if(!list||!list.length)return null;const s=sortSp(list);let c=s.at(-1);for(const sp of s){if(toMin(sp.time)<=min)c=sp;else break}return c}
+
+/* ---------------- APPLY SHEET ---------------- */
+function applySheet(L){
+  const zids=Object.keys(L.schedules||{});
+  const sel=new Set(zids); // default: all rooms the plan covers
+  const sh=$("#sheet");sh.innerHTML="";
+  sh.append(el("h2","","Apply "+L.name));
+  sh.append(el("div","sub","Choose which rooms to switch. All rooms in this plan are selected."));
+  const chips=el("div","chips");
+  zids.forEach(id=>{
+    const c=el("button","chip on");c.innerHTML=`<span class="tick">✓</span>${zname(id)}`;
+    c.onclick=()=>{if(sel.has(id)){sel.delete(id);c.className="chip";c.textContent=zname(id)}else{sel.add(id);c.className="chip on";c.innerHTML=`<span class="tick">✓</span>${zname(id)}`}upd()};
+    chips.append(c);
   });
-}
-function renderLib(){
-  const box=$("#libList");box.innerHTML="";
-  state.library.forEach(L=>{
-    const b=el("button","libitem");
-    const n=Object.keys(L.schedules||{}).length;
-    b.append(el("span","nm",L.name),el("span","tag",n?`${n} zone${n>1?"s":""}`:"empty"));
-    const del=el("button","del","✕");del.title="Delete";
-    del.onclick=e=>{e.stopPropagation();deleteLib(L)};
-    b.append(del);
-    b.onclick=()=>loadFromLib(L.id);box.append(b);
-  });
-}
-
-/* ---------- select zone ---------- */
-async function selectZone(id){
-  state.zoneId=id;const z=zone(id);
-  $("#zoneName").textContent=z.name;
-  $("#zoneKind").textContent=z.type==="dhw"?"Hot water":"Heating zone";
-  if(!state.working[id]){
-    try{const live=await API.live(id);setWorking(id,live,"Live schedule")}
-    catch(err){toast("Couldn’t load live schedule: "+err.message,"err");setWorking(id,emptyWeek(),"Live schedule")}
-  }
-  buildSourceSelect();renderZones();renderWeek();renderDayEditor();updateDirty();updateCommit();
-}
-function setWorking(id,sched,label){state.working[id]=clone(sched);state.baseline[id]=clone(sched);state.sourceLabel[id]=label}
-const emptyWeek=()=>{const o={};DAYS.forEach(d=>o[d]=[]);return o};
-
-function buildSourceSelect(){
-  const s=$("#src");s.innerHTML="";s.append(new Option("Live schedule","__live"));
-  state.library.forEach(L=>{if(L.schedules&&L.schedules[state.zoneId])s.append(new Option("Library · "+L.name,"lib:"+L.id))});
-  const lbl=state.sourceLabel[state.zoneId];
-  s.value=lbl&&lbl.startsWith("Library · ")?"lib:"+(state.library.find(L=>"Library · "+L.name===lbl)?.id||""):"__live";
-}
-
-/* ---------- week ---------- */
-function activeAt(list,min){if(!list||!list.length)return null;const s=sortSp(list);let cur=s.at(-1);for(const sp of s){if(toMin(sp.time)<=min)cur=sp;else break}return cur}
-function renderWeek(){
-  const wk=$("#week");wk.innerHTML="";const z=zone(state.zoneId),sch=cur();
-  DAYS.forEach(d=>{
-    const row=el("div","day"+(d===state.selDay?" sel":""));row.append(el("span","dname",d));
-    const bar=el("div","bar");const list=sortSp(sch[d]||[]);
-    if(!list.length){const seg=el("div","seg dark");seg.style.cssText=`left:0;right:0;background:${OFF_COLOR}`;seg.textContent="no switchpoints";bar.append(seg)}
-    else{
-      const pts=[{start:0,sp:list.at(-1)}];list.forEach(sp=>pts.push({start:toMin(sp.time),sp}));pts.push({start:1440,sp:null});
-      for(let i=0;i<pts.length-1;i++){const a=pts[i],b=pts[i+1];if(b.start<=a.start)continue;
-        const c=segColor(a.sp,z.type);const seg=el("div","seg"+(isDark(c)?" dark":""));
-        seg.style.cssText=`left:${a.start/1440*100}%;width:${(b.start-a.start)/1440*100}%;background:${c}`;
-        if(b.start-a.start>=80)seg.textContent=segLabel(a.sp,z.type);bar.append(seg)}
-      list.forEach(sp=>{const t=el("div","tick");t.style.left=toMin(sp.time)/1440*100+"%";bar.append(t)});
-    }
-    row.append(bar);row.onclick=()=>{state.selDay=d;renderWeek();renderDayEditor()};wk.append(row);
-  });
-  const ax=$("#axis");ax.innerHTML="";["00","06","12","18","24"].forEach(h=>ax.append(el("span",null,h)));
-}
-
-/* ---------- day editor ---------- */
-function renderDayEditor(){
-  const wrap=$("#dayEdit");wrap.hidden=false;const z=zone(state.zoneId),d=state.selDay;
-  const list=sortSp(cur()[d]||[]);cur()[d]=list;
-  $("#deTitle").textContent=DAY_FULL[d];
-  const c=$("#deCount");c.textContent=`${list.length} switchpoint${list.length!==1?"s":""} · max 6`;c.classList.toggle("over",list.length>6);
-  const box=$("#spList");box.innerHTML="";
-  list.forEach(sp=>{
-    const row=el("div","sp");const chip=el("span","chip");chip.style.background=segColor(sp,z.type);
-    const time=el("input");time.type="time";time.value=sp.time;time.onchange=()=>{sp.time=time.value;commitEdit()};
-    row.append(chip,time);
-    if(z.type==="dhw"){
-      const tg=el("div","dhwtoggle");["On","Off"].forEach(v=>{const b=el("button",sp.state===v?"on":"");b.dataset.v=v;b.textContent=v;b.onclick=()=>{sp.state=v;commitEdit()};tg.append(b)});row.append(tg);
-    }else{
-      const t=el("div","temp");const r=el("input");r.type="range";r.min=z.min;r.max=z.max;r.step="0.5";r.value=sp.temp;
-      const val=el("span","val tnum",sp.temp.toFixed(1)+" °C");
-      r.oninput=()=>{sp.temp=parseFloat(r.value);val.textContent=sp.temp.toFixed(1)+" °C";chip.style.background=segColor(sp,z.type)};
-      r.onchange=commitEdit;t.append(r,val);row.append(t);
-    }
-    const rm=el("button","rm","✕");rm.title="Remove";rm.onclick=()=>{const a=cur()[d];a.splice(a.indexOf(sp),1);commitEdit()};row.append(rm);box.append(row);
-  });
-}
-function commitEdit(){cur()[state.selDay]=sortSp(cur()[state.selDay]);renderWeek();renderDayEditor();renderZones();updateDirty();updateCommit()}
-
-/* ---------- actions ---------- */
-function wireGlobal(){
-  $("#theme").onclick=()=>{const r=document.documentElement;const n=r.dataset.theme==="light"?"":"light";if(n)r.dataset.theme=n;else r.removeAttribute("data-theme");localStorage.setItem("evo-theme",n)};
-  $("#refresh").onclick=async()=>{delete state.working[state.zoneId];await selectZone(state.zoneId);toast("Reloaded live schedule")};
-  $("#pullLive").onclick=async()=>{try{const s=await API.live(state.zoneId);setWorking(state.zoneId,s,"Live schedule");buildSourceSelect();renderWeek();renderDayEditor();updateDirty();updateCommit();toast("Live schedule pulled into editor")}catch(err){toast("Pull failed: "+err.message,"err")}};
-  $("#revert").onclick=async()=>{delete state.working[state.zoneId];await selectZone(state.zoneId);toast("Edits reverted")};
-  $("#src").onchange=e=>{const v=e.target.value;
-    if(v==="__live")$("#pullLive").click();
-    else{const L=state.library.find(x=>"lib:"+x.id===v);if(L?.schedules?.[state.zoneId]){
-      state.working[state.zoneId]=clone(L.schedules[state.zoneId]);state.baseline[state.zoneId]=clone(L.schedules[state.zoneId]);state.sourceLabel[state.zoneId]="Library · "+L.name;
-      renderWeek();renderDayEditor();updateDirty();updateCommit();toast("Loaded “"+L.name+"”")}}};
-  $("#addSp").onclick=()=>{const z=zone(state.zoneId);cur()[state.selDay].push(z.type==="dhw"?{time:"12:00",state:"On"}:{time:"12:00",temp:20});commitEdit()};
-  $("#copyTarget").onchange=e=>{const v=e.target.value;if(!v)return;const src=clone(cur()[state.selDay]);
-    const tg=v==="all"?DAYS:v==="weekdays"?["Mon","Tue","Wed","Thu","Fri"]:["Sat","Sun"];
-    tg.forEach(d=>{if(d!==state.selDay)cur()[d]=clone(src)});e.target.value="";commitEdit();
-    toast(`Copied ${DAY_FULL[state.selDay]} to ${v==="all"?"every day":v==="weekdays"?"Mon–Fri":"the weekend"}`)};
-  $("#saveLib").onclick=saveToLibrary;
-  $("#newLib").onclick=modalNewLib;
-  $("#pushLive").onclick=confirmPush;
-}
-
-/* ---------- library ---------- */
-async function persistLib(){try{await API.putLibrary(state.library)}catch(err){toast("Library not saved: "+err.message,"err")}}
-function loadFromLib(id){
-  const L=state.library.find(x=>x.id===id);if(!L)return;
-  if(!L.schedules?.[state.zoneId]){toast(`“${L.name}” has no schedule for ${zone(state.zoneId).name} yet — edit and Save to add it`);return}
-  state.working[state.zoneId]=clone(L.schedules[state.zoneId]);state.baseline[state.zoneId]=clone(L.schedules[state.zoneId]);
-  state.sourceLabel[state.zoneId]="Library · "+L.name;
-  buildSourceSelect();renderWeek();renderDayEditor();updateDirty();updateCommit();toast("Loaded “"+L.name+"”");
-}
-function saveToLibrary(){
-  const opts=state.library.map(L=>`<option value="${L.id}">${L.name}</option>`).join("");
-  openModal(`<h3>Save to library</h3><p>Store the current <b>${zone(state.zoneId).name}</b> schedule into an alternate set. A set can hold a schedule for every zone.</p>
-    <select class="sel" id="mSel" style="width:100%;margin-bottom:12px"><option value="__new">➕ New schedule set…</option>${opts}</select>
-    <input type="text" id="mName" placeholder="Name for new set (e.g. Half-term)" />
-    <div class="actions"><button class="btn ghost" data-close>Cancel</button><button class="btn primary" id="mSave">Save</button></div>`);
-  const nameRow=$("#mName");$("#mSel").onchange=e=>nameRow.style.display=e.target.value==="__new"?"block":"none";
-  $("#mSave").onclick=async()=>{
-    const sel=$("#mSel").value;let L;
-    if(sel==="__new"){const nm=nameRow.value.trim();if(!nm){nameRow.focus();return}L={id:"s"+Date.now(),name:nm,note:"",schedules:{}};state.library.push(L)}
-    else L=state.library.find(x=>x.id===sel);
-    L.schedules[state.zoneId]=clone(cur());
-    state.baseline[state.zoneId]=clone(cur());state.sourceLabel[state.zoneId]="Library · "+L.name;
-    await persistLib();renderLib();buildSourceSelect();updateDirty();updateCommit();closeModal();toast(`Saved to “${L.name}”`,"ok");
+  sh.append(chips);
+  const act=el("div","sheet-actions");
+  const cancel=el("button","btn ghost","Cancel");cancel.onclick=closeSheet;
+  const apply=el("button","btn primary");
+  const upd=()=>apply.textContent=`Apply to ${sel.size} room${sel.size!==1?"s":""}`;upd();
+  apply.onclick=async()=>{
+    if(!sel.size)return;
+    apply.disabled=true;apply.innerHTML='<span class="spin"></span> Applying…';
+    try{ await API.apply(L.id,[...sel]); closeSheet(); toast(`Switched ${sel.size} room${sel.size!==1?"s":""} to ${L.name}`,"ok"); await refreshAll(); }
+    catch(err){ apply.disabled=false;upd(); toast("Apply failed: "+(err.message||err),"err"); }
   };
-}
-function modalNewLib(){
-  openModal(`<h3>New alternate schedule</h3><p>Create an empty set, then open each zone, edit it, and use <b>Save to library</b> to add that zone into it.</p>
-    <input type="text" id="mName" placeholder="Name (e.g. Summer, Away, Christmas)" />
-    <div class="actions"><button class="btn ghost" data-close>Cancel</button><button class="btn primary" id="mCreate">Create</button></div>`);
-  $("#mCreate").onclick=async()=>{const nm=$("#mName").value.trim();if(!nm){$("#mName").focus();return}
-    state.library.push({id:"s"+Date.now(),name:nm,note:"",schedules:{}});await persistLib();renderLib();closeModal();toast(`Created “${nm}”`,"ok")};
-}
-function deleteLib(L){
-  openModal(`<h3>Delete “${L.name}”?</h3><p>This removes the whole alternate set from your library. It does not change anything live on Evohome.</p>
-    <div class="actions"><button class="btn ghost" data-close>Cancel</button><button class="btn primary" id="mDel" style="background:var(--danger);border-color:var(--danger)">Delete</button></div>`);
-  $("#mDel").onclick=async()=>{state.library=state.library.filter(x=>x.id!==L.id);await persistLib();renderLib();buildSourceSelect();closeModal();toast(`Deleted “${L.name}”`)};
+  act.append(cancel,apply);sh.append(act);
+  openSheet();
 }
 
-/* ---------- dirty / commit ---------- */
-function updateDirty(){
-  const same=JSON.stringify(sortAll(cur()))===JSON.stringify(sortAll(state.baseline[state.zoneId]||{}));
-  $("#dirty").classList.toggle("on",!same);
+/* ---------------- BOOST ---------------- */
+async function fireBoost(sc){
+  if(!sc.zoneIds?.length){toast("This boost has no rooms — edit it first","err");return}
+  try{
+    const r=await API.boost(sc.zoneIds,sc.temp,sc.minutes);
+    const til=hhmm(r.until);
+    toastUndo(`${sc.name} → ${fmtT(sc.temp)} until ${til}`, sc.zoneIds);
+    setTimeout(()=>refreshAll(),600);
+  }catch(err){toast("Boost failed: "+(err.message||err),"err")}
+}
+
+/* ---------------- BOOSTS EDITOR ---------------- */
+function renderBoosts(){
+  const m=$("#main");m.innerHTML="";
+  S.shortcuts.forEach(sc=>{
+    const it=el("div","list-item");
+    it.append(el("span","nm",sc.name));
+    it.append(el("span","meta",`${fmtT(sc.temp)} · ${fmtDur(sc.minutes)} · ${sc.zoneIds.map(zname).join(", ")||"no rooms"}`));
+    const e=el("button","edit","Edit");e.onclick=()=>boostForm(sc);
+    it.append(e);m.append(it);
+  });
+  if(!S.shortcuts.length)m.append(el("div","empty","No quick boosts yet."));
+  const add=el("button","linkbtn","+ New boost");add.onclick=()=>boostForm(null);m.append(add);
+}
+function boostForm(sc){
+  const isNew=!sc; sc=sc?clone(sc):{id:"sc"+Date.now(),name:"",zoneIds:[],temp:21,minutes:120};
+  const heating=Object.values(S.zmap).filter(z=>z.type!=="dhw");
+  const sel=new Set(sc.zoneIds);
+  const sh=$("#sheet");sh.innerHTML="";
+  sh.append(el("h2","",isNew?"New boost":"Edit boost"));
+  // name
+  const f1=el("div","field");f1.append(Object.assign(el("label"),{textContent:"Name"}));
+  const nm=el("input");nm.type="text";nm.placeholder="e.g. Lounge + Kitchen";nm.value=sc.name;f1.append(nm);sh.append(f1);
+  // rooms
+  const f2=el("div","field");f2.append(Object.assign(el("label"),{textContent:"Rooms"}));
+  const chips=el("div","chips");
+  heating.forEach(z=>{const c=el("button","chip"+(sel.has(z.id)?" on":""),z.name);
+    c.onclick=()=>{sel.has(z.id)?sel.delete(z.id):sel.add(z.id);c.className="chip"+(sel.has(z.id)?" on":"")};chips.append(c)});
+  f2.append(chips);sh.append(f2);
+  // temp
+  const f3=el("div","field");f3.append(Object.assign(el("label"),{textContent:"Temperature"}));
+  const tr=el("div","temprow");const rng=el("input");rng.type="range";rng.min=5;rng.max=28;rng.step=.5;rng.value=sc.temp;
+  const tv=el("span","v",fmtT(sc.temp));rng.oninput=()=>tv.textContent=fmtT(+rng.value);tr.append(rng,tv);f3.append(tr);sh.append(f3);
+  // duration
+  const f4=el("div","field");f4.append(Object.assign(el("label"),{textContent:"For how long"}));
+  const seg=el("div","seg");let mins=sc.minutes;
+  [["30m",30],["1h",60],["2h",120],["3h",180]].forEach(([lbl,mn])=>{const b=el("button",mins===mn?"on":"",lbl);
+    b.onclick=()=>{mins=mn;[...seg.children].forEach(x=>x.className="");b.className="on"};seg.append(b)});
+  f4.append(seg);sh.append(f4);
+  // actions
+  const act=el("div","sheet-actions");
+  if(!isNew){const del=el("button","btn danger","Delete");del.onclick=async()=>{S.shortcuts=S.shortcuts.filter(x=>x.id!==sc.id);await API.saveShortcuts(S.shortcuts);closeSheet();renderBoosts();toast("Boost deleted")};act.append(del)}
+  const cancel=el("button","btn ghost","Cancel");cancel.onclick=closeSheet;
+  const save=el("button","btn primary","Save");
+  save.onclick=async()=>{
+    const name=nm.value.trim(); if(!name){nm.focus();return}
+    const out={id:sc.id,name,zoneIds:[...sel],temp:+rng.value,minutes:mins};
+    const i=S.shortcuts.findIndex(x=>x.id===sc.id);
+    if(i>=0)S.shortcuts[i]=out; else S.shortcuts.push(out);
+    await API.saveShortcuts(S.shortcuts);closeSheet();renderBoosts();toast("Boost saved","ok");
+  };
+  act.append(cancel,save);sh.append(act);
+  openSheet();
+}
+
+/* ---------------- SCHEDULE EDITOR ---------------- */
+function renderEditor(){
+  const m=$("#main");m.innerHTML="";
+  if(!S.library.length){m.append(el("div","empty","No saved schedules yet."));return}
+  const e=S.ed;
+  if(!e.plan)e.plan=S.library[0].id;
+  const planObj=S.library.find(L=>L.id===e.plan)||S.library[0];
+  const heating=Object.values(S.zmap).filter(z=>z.type!=="dhw");
+  if(!e.zone)e.zone=heating[0]?.id;
+
+  const row=el("div","selrow");
+  const ps=el("select","sel");S.library.forEach(L=>ps.append(new Option(L.name,L.id)));ps.value=e.plan;
+  ps.onchange=()=>{e.plan=ps.value;e.work=null;renderEditor()};
+  const zs=el("select","sel");heating.forEach(z=>zs.append(new Option(z.name,z.id)));zs.value=e.zone;
+  zs.onchange=()=>{e.zone=zs.value;e.work=null;renderEditor()};
+  row.append(ps,zs);m.append(row);
+
+  // load working copy
+  if(!e.work){
+    const s=planObj.schedules?.[e.zone];
+    if(s){e.work=clone(s);e.base=clone(s)}
+    else{ // plan has no schedule for this room
+      const box=el("div","empty");box.innerHTML=`<b>${planObj.name}</b> has no schedule for <b>${zname(e.zone)}</b> yet.`;
+      const r=el("div","foot");
+      const b1=el("button","btn","Copy current Evohome schedule");
+      b1.onclick=async()=>{try{const live=await API.live(e.zone);e.work=live;e.base=clone(live);renderEditor()}catch(err){toast(err.message,"err")}};
+      const b2=el("button","btn ghost","Start blank");
+      b2.onclick=()=>{const blank={};DAYS.forEach(d=>blank[d]=[{time:"00:00",temp:15}]);e.work=blank;e.base=clone(blank);renderEditor()};
+      r.append(b1,b2);box.append(r);m.append(box);return;
+    }
+  }
+  const z=S.zmap[e.zone];
+  // week
+  const wk=el("div","week");
+  DAYS.forEach(d=>{
+    const rr=el("div","day"+(d===e.day?" sel":""));rr.append(el("span","dn",d));
+    const bar=el("div","bar");const list=sortSp(e.work[d]||[]);
+    if(!list.length){const s=el("div","seg2 d");s.style.cssText="left:0;right:0;background:#33465e";}
+    else{const pts=[{s:0,sp:list.at(-1)}];list.forEach(sp=>pts.push({s:toMin(sp.time),sp}));pts.push({s:1440,sp:null});
+      for(let i=0;i<pts.length-1;i++){const a=pts[i],b=pts[i+1];if(b.s<=a.s)continue;const c=tempColor(a.sp.temp);const sg=el("div","seg2"+(dark(c)?" d":""));
+        sg.style.cssText=`left:${a.s/1440*100}%;width:${(b.s-a.s)/1440*100}%;background:${c}`;if(b.s-a.s>=90)sg.textContent=fmtT(a.sp.temp);bar.append(sg)}}
+    rr.append(bar);rr.onclick=()=>{e.day=d;renderEditor()};wk.append(rr);
+  });
+  m.append(wk);
+  const ax=el("div","axis");ax.append(el("span"));const mk=el("div","m");["00","06","12","18","24"].forEach(h=>mk.append(el("span",null,h)));ax.append(mk);m.append(ax);
+
+  // day editor
+  const de=el("div","deday");de.append(el("h3","",DFULL[e.day]));
+  const list=sortSp(e.work[e.day]||[]);e.work[e.day]=list;
+  list.forEach(sp=>{
+    const r=el("div","sp");const c=el("span","c");c.style.background=tempColor(sp.temp);
+    const tm=el("input");tm.type="time";tm.value=sp.time;tm.onchange=()=>{sp.time=tm.value;commit()};
+    const t=el("div","t");const rg=el("input");rg.type="range";rg.min=z?.min??5;rg.max=z?.max??28;rg.step=.5;rg.value=sp.temp;
+    const v=el("span","val",fmtT(sp.temp));rg.oninput=()=>{sp.temp=+rg.value;v.textContent=fmtT(sp.temp);c.style.background=tempColor(sp.temp)};rg.onchange=commit;
+    t.append(rg,v);
+    const rm=el("button","rm","✕");rm.onclick=()=>{const a=e.work[e.day];a.splice(a.indexOf(sp),1);commit()};
+    r.append(c,tm,t,rm);de.append(r);
+  });
+  const foot=el("div","defoot");
+  const add=el("button","btn ghost","+ Add change");add.onclick=()=>{e.work[e.day].push({time:"12:00",temp:20});commit()};
+  const copy=el("div","copy");const cs=el("select","sel");cs.style.minWidth="130px";
+  cs.append(new Option("Copy day to…",""),new Option("Mon–Fri","weekdays"),new Option("Weekend","weekend"),new Option("Every day","all"));
+  cs.onchange=()=>{const v=cs.value;if(!v)return;const src=clone(e.work[e.day]);(v==="all"?DAYS:v==="weekdays"?["Mon","Tue","Wed","Thu","Fri"]:["Sat","Sun"]).forEach(d=>{if(d!==e.day)e.work[d]=clone(src)});cs.value="";commit();toast("Day copied")};
+  copy.append(cs);foot.append(add,copy);de.append(foot);
+  m.append(de);
+
+  // save / discard
+  const dirty=JSON.stringify(sortAll(e.work))!==JSON.stringify(sortAll(e.base));
+  const f=el("div","foot");
+  const r1=el("div","row");
+  const disc=el("button","btn ghost","Discard");disc.disabled=!dirty;disc.onclick=()=>{e.work=clone(e.base);renderEditor()};
+  const save=el("button","btn primary","Save changes");save.disabled=!dirty;
+  save.onclick=async()=>{
+    const L=S.library.find(x=>x.id===e.plan); L.schedules=L.schedules||{}; L.schedules[e.zone]=clone(e.work);
+    try{await API.saveLibrary(S.library);e.base=clone(e.work);renderEditor();toast(`Saved to ${L.name}`,"ok")}catch(err){toast(err.message,"err")}
+  };
+  r1.append(disc,save);f.append(r1);
+  const apply=el("button","btn warm","Apply this room to Evohome now");
+  apply.onclick=async()=>{apply.disabled=true;apply.innerHTML='<span class="spin"></span> Applying…';
+    try{await API.push(e.zone,e.work);toast(`${zname(e.zone)} is now live`,"ok");await refreshAll()}catch(err){apply.disabled=false;apply.textContent="Apply this room to Evohome now";toast(err.message,"err")}};
+  f.append(apply);m.append(f);
+
+  function commit(){e.work[e.day]=sortSp(e.work[e.day]);renderEditor()}
 }
 function sortAll(s){const o={};DAYS.forEach(d=>o[d]=sortSp(s[d]||[]));return o}
-function updateCommit(){$("#commitNote").innerHTML=`Editing <b>${zone(state.zoneId).name}</b> — source: ${state.sourceLabel[state.zoneId]||"—"}`}
 
-/* ---------- push ---------- */
-function confirmPush(){
-  const z=zone(state.zoneId);
-  openModal(`<h3>Push to live?</h3><p>This overwrites the <b>Monday–Sunday</b> schedule for <b>${z.name}</b> on your Evohome controller (via the TCC cloud), replacing whatever is live now.</p>
-    <div class="warnrow">⚠ This changes real heating in your home. Manual overrides on the wall unit aren’t affected — the weekly programme is.</div>
-    <div class="actions"><button class="btn ghost" data-close>Cancel</button><button class="btn primary" id="mPush">Push ${z.name} to live</button></div>`);
-  $("#mPush").onclick=async()=>{
-    const btn=$("#mPush");btn.disabled=true;btn.textContent="Pushing…";
-    try{await API.push(state.zoneId,cur());
-      state.baseline[state.zoneId]=clone(cur());state.sourceLabel[state.zoneId]="Live schedule";
-      closeModal();renderZones();updateDirty();updateCommit();toast(`${z.name} schedule is now live`,"ok");
-    }catch(err){closeModal();toast("Push failed: "+err.message,"err")}
-  };
-}
-
-/* ---------- modal + toast ---------- */
-function openModal(html){const s=$("#scrim");$("#modal").innerHTML=html;s.classList.add("show");
-  s.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeModal);s.onclick=e=>{if(e.target===s)closeModal()}}
-function closeModal(){$("#scrim").classList.remove("show")}
-let toastT;function toast(msg,kind){const t=$("#toast");t.textContent=msg;t.className="toast show"+(kind?" "+kind:"");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("show"),2800)}
+/* sheet + toast */
+function openSheet(){$("#scrim").classList.add("show")}
+function closeSheet(){$("#scrim").classList.remove("show")}
+let tt;
+function toast(msg,kind){const t=$("#toast");t.innerHTML="";t.append(document.createTextNode(msg));t.className="toast show"+(kind?" "+kind:"");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),2800)}
+function toastUndo(msg,zoneIds){const t=$("#toast");t.innerHTML="";t.append(document.createTextNode(msg));
+  const u=el("span","undo","Undo");u.onclick=async()=>{t.classList.remove("show");try{await API.cancel(zoneIds);toast("Boost cancelled");setTimeout(()=>refreshAll(),400)}catch(err){toast(err.message,"err")}};
+  t.append(u);t.className="toast show ok";clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),6000)}
 </script>
 </body>
 </html>

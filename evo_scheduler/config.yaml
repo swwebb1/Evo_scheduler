@@ -1,10 +1,10 @@
 name: Evo Scheduler
-version: "0.1.0"
+version: "0.2.0"
 slug: evo_scheduler
 description: >-
   View, store and push Evohome weekly heating schedules — a library of
   alternate schedules you can load, edit and apply to Evohome per zone.
-url: "https://github.com/swwebb1/Evo_scheduler"
+url: "https://github.com/CHANGE-ME/evo-scheduler-addon"
 arch:
   - aarch64
   - amd64
