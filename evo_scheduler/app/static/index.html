@@ -33,7 +33,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;text-a
 /* header */
 .top{display:flex;align-items:center;gap:12px;padding:16px 18px 8px}
 .top .title{font-weight:700;font-size:19px;letter-spacing:-.02em;flex:1;display:flex;align-items:center;gap:9px}
-.glyph{width:26px;height:26px;border-radius:8px;background:linear-gradient(150deg,#2f5ea8,#d97b34 80%);box-shadow:inset 0 0 0 1px #ffffff22}
+.glyph{width:28px;height:28px;flex:0 0 auto;display:block}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--warm)}
 .dot.ok{background:var(--ok)}.dot.err{background:var(--danger)}
 .iconbtn{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:var(--text-dim)}
@@ -171,7 +171,7 @@ input[type=text]{width:100%;padding:12px 13px;background:var(--surface-3);border
 <div class="app">
   <div class="top">
     <button class="back" id="back" style="display:none">‹ Back</button>
-    <div class="title"><span class="glyph"></span><span id="ttl">Evo Scheduler</span></div>
+    <div class="title"><svg class="glyph" viewBox="0 0 256 256" aria-hidden="true"><defs><linearGradient id="gT" x1="0" y1="88" x2="0" y2="176" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ef9440"/><stop offset=".5" stop-color="#d1793f"/><stop offset="1" stop-color="#3f8fb0"/></linearGradient></defs><rect x="8" y="8" width="240" height="240" rx="58" fill="#1a222d" stroke="#2f3a48" stroke-width="2"/><path d="M42 170 H84 V102 H150 V170 H214" fill="none" stroke="url(#gT)" stroke-width="19" stroke-linejoin="round" stroke-linecap="round"/><circle cx="84" cy="102" r="10.5" fill="#f4b866"/><circle cx="150" cy="102" r="10.5" fill="#f4b866"/></svg><span id="ttl">Evo Scheduler</span></div>
     <span class="dot" id="dot" title="connection"></span>
     <button class="iconbtn" id="refresh" title="Refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/></svg></button>
     <button class="iconbtn" id="theme" title="Light / dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>

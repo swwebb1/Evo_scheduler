@@ -1,5 +1,5 @@
 name: Evo Scheduler
-version: "0.2.0"
+version: "0.2.1"
 slug: evo_scheduler
 description: >-
   View, store and push Evohome weekly heating schedules — a library of
@@ -12,7 +12,7 @@ arch:
 init: false
 ingress: true
 ingress_port: 8099
-panel_icon: mdi:calendar-clock
+panel_icon: mdi:radiator
 panel_title: Evo Scheduler
 boot: auto
 startup: application

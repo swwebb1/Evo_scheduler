@@ -1,4 +1,7 @@
 # Changelog
+## 0.2.1
+- Real app icon and logo (a heating-schedule profile mark) and a heating sidebar icon.
+
 ## 0.2.0
 - New phone-first home screen: switch plan and quick-boost front and centre.
 - Apply a saved plan to chosen rooms in one tap (room picker, all covered rooms preselected).
