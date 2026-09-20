@@ -1,4 +1,11 @@
 # Changelog
+## 0.3.0
+- Home reworked: current plan now lives in the header; Quick boost moved to the top; "Current status" table with Current / Target / Until column labels.
+- Tap a room to set a temporary override — +/- 1° with 18/21/23° quick buttons, until a chosen time, and Back to schedule.
+- "Until" shows when the setpoint next changes (override end, or next scheduled switchpoint).
+- New Settings page (gear): switch plan (dropdown), edit boosts, edit schedules, and theme.
+- Theme now offers Light / Dark / Follow system (default: follow system).
+
 ## 0.2.1
 - Real app icon and logo (a heating-schedule profile mark) and a heating sidebar icon.
 

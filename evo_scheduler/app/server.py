@@ -1,18 +1,4 @@
-"""Evo Scheduler backend — FastAPI served through Home Assistant ingress.
-
-Everyday endpoints (home screen):
-    GET  /status                 -> {connected, plan, zones:[{id,name,current,target,mode,until}]}
-    POST /apply    {libraryId, zoneIds}       -> apply a saved plan to chosen rooms
-    POST /boost    {zoneIds, temp, minutes}   -> timed override ("21° for 2h")
-    POST /cancel   {zoneIds}                   -> clear override, back to schedule
-    GET/PUT /shortcuts                         -> quick-boost buttons
-
-Editor endpoints (level down):
-    GET  /zones ; GET /zones/{id}/live ; POST /zones/{id}/push ; GET/PUT /library
-
-State (last applied plan) and shortcuts live in /data, so they survive
-restarts and ride along in add-on backups.
-"""
+"""Evo Scheduler backend — FastAPI served through Home Assistant ingress."""
 from __future__ import annotations
 
 import json
@@ -81,8 +67,7 @@ app = FastAPI(lifespan=lifespan, title="Evo Scheduler")
 
 def _ready() -> EvoEngine:
     if engine is None or not engine.connected:
-        raise HTTPException(503, "Not connected to Evohome yet — "
-                                 "check the add-on log and your credentials.")
+        raise HTTPException(503, "Not connected to Evohome yet — check the add-on log and credentials.")
     return engine
 
 
@@ -99,15 +84,10 @@ def _lib_entry(lib_id: str) -> dict:
 
 def _seed_shortcuts(zones: list[dict]) -> list:
     by_name = {z["name"].lower(): z["id"] for z in zones}
-
     def ids(*names):
         return [by_name[n.lower()] for n in names if n.lower() in by_name]
-
-    seeds = [
-        {"id": "sc_lounge", "name": "Lounge + Kitchen", "zoneIds": ids("Living Room", "Kitchen"),
-         "temp": 21, "minutes": 120},
-        {"id": "sc_bed", "name": "Bedroom", "zoneIds": ids("Bedroom"), "temp": 21, "minutes": 60},
-    ]
+    seeds = [{"id": "sc_lounge", "name": "Lounge + Kitchen", "zoneIds": ids("Living Room", "Kitchen"), "temp": 21, "minutes": 120},
+             {"id": "sc_bed", "name": "Bedroom", "zoneIds": ids("Bedroom"), "temp": 21, "minutes": 60}]
     return [s for s in seeds if s["zoneIds"]]
 
 
@@ -133,7 +113,7 @@ async def apply(payload: dict = Body(...)):
     for zid in zone_ids:
         sched = entry.get("schedules", {}).get(zid)
         if not sched:
-            results.append({"zone": zid, "status": "skipped (no schedule in plan)"})
+            results.append({"zone": zid, "status": "skipped"})
             continue
         try:
             await eng.push(zid, sched)
@@ -157,10 +137,13 @@ async def boost(payload: dict = Body(...)):
     zone_ids = payload.get("zoneIds") or []
     if not zone_ids:
         raise HTTPException(400, "No rooms given")
+    if "temp" not in payload:
+        raise HTTPException(400, "Need temp")
+    if not payload.get("minutes") and not payload.get("until"):
+        raise HTTPException(400, "Need minutes or until")
     try:
-        return await eng.boost(zone_ids, float(payload["temp"]), int(payload["minutes"]))
-    except KeyError:
-        raise HTTPException(400, "Need temp and minutes")
+        return await eng.boost(zone_ids, float(payload["temp"]),
+                               minutes=payload.get("minutes"), until_iso=payload.get("until"))
     except evo_exc.ApiRateLimitExceededError:
         raise HTTPException(429, "TCC rate limit — wait a minute and retry")
 
