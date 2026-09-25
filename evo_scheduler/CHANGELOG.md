@@ -1,4 +1,8 @@
 # Changelog
+## 0.4.0
+- Create new plans from the app (Settings -> Edit plans -> + New plan), optionally cloning an existing plan to start from.
+- Manage plans: rename, duplicate, delete.
+
 ## 0.3.0
 - Home reworked: current plan now lives in the header; Quick boost moved to the top; "Current status" table with Current / Target / Until column labels.
 - Tap a room to set a temporary override — +/- 1° with 18/21/23° quick buttons, until a chosen time, and Back to schedule.

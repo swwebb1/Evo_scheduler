@@ -203,7 +203,7 @@ function dotClass(){const st=S.status;return st?.connected?"dot ok":"dot err"}
 function render(){
   const v=stack.at(-1);
   renderTop(v);
-  ({home:renderHome,settings:renderSettings,boosts:renderBoosts,editor:renderEditor}[v]||renderHome)();
+  ({home:renderHome,settings:renderSettings,boosts:renderBoosts,plans:renderPlans,editor:renderEditor}[v]||renderHome)();
 }
 function renderTop(v){
   const t=$("#top");t.innerHTML="";
@@ -219,7 +219,7 @@ function renderTop(v){
     t.append(rf,gr);
   }else{
     const b=el("button","back","‹ Back");b.onclick=goBack;t.append(b);
-    t.append(el("div","ttl",{settings:"Settings",boosts:"Quick boosts",editor:"Edit schedules"}[v]||""));
+    t.append(el("div","ttl",{settings:"Settings",boosts:"Quick boosts",plans:"Plans",editor:"Edit schedules"}[v]||""));
     t.append(Object.assign(el("span",dotClass()),{title:"connection"}));
   }
 }
@@ -321,7 +321,7 @@ function renderSettings(){
   f.append(sel);m.append(f);
   // edit boosts / schedules
   const i1=el("button","set-item");i1.append(el("span","nm","Edit boosts"),el("span","chev","›"));i1.onclick=()=>go("boosts");
-  const i2=el("button","set-item");i2.append(el("span","nm","Edit schedules"),el("span","chev","›"));i2.onclick=()=>go("editor");
+  const i2=el("button","set-item");i2.append(el("span","nm","Edit plans"),el("span","chev","›"));i2.onclick=()=>go("plans");
   m.append(i1,i2);
   // theme
   const tf=el("div","field");tf.style.marginTop="12px";tf.append(Object.assign(el("label"),{textContent:"Theme"}));
@@ -377,6 +377,64 @@ function boostForm(sc){
   save.onclick=async()=>{const name=nm.value.trim();if(!name){nm.focus();return}const out={id:sc.id,name,zoneIds:[...sel],temp:+rng.value,minutes:mins};
     const i=S.shortcuts.findIndex(x=>x.id===sc.id);if(i>=0)S.shortcuts[i]=out;else S.shortcuts.push(out);await API.saveShortcuts(S.shortcuts);closeSheet();renderBoosts();toast("Boost saved","ok")};
   act.append(cancel,save);sh.append(act);openSheet();
+}
+
+/* ---------------- PLANS MANAGER ---------------- */
+function editPlanSchedules(L){S.ed.plan=L.id;S.ed.zone=null;S.ed.work=null;go("editor")}
+function renderPlans(){
+  const m=$("#main");m.innerHTML="";
+  S.library.forEach(L=>{
+    const it=el("div","list-item");it.style.cursor="pointer";
+    it.append(el("span","nm",L.name),el("span","meta",`${Object.keys(L.schedules||{}).length} rooms`));
+    const more=el("button","edit","•••");more.style.color="var(--text-faint)";more.style.letterSpacing="1px";
+    more.onclick=e=>{e.stopPropagation();planActions(L)};
+    it.append(more);it.onclick=()=>editPlanSchedules(L);m.append(it);
+  });
+  if(!S.library.length)m.append(el("div","empty","No plans yet."));
+  const add=el("button","linkbtn","+ New plan");add.onclick=()=>newPlanForm();m.append(add);
+}
+function planActions(L){
+  const sh=$("#sheet");sh.innerHTML="";
+  sh.append(el("h2","",L.name),el("div","sub",`${Object.keys(L.schedules||{}).length} rooms`));
+  const mk=(lbl,cls,fn)=>{const b=el("button","btn "+cls,lbl);b.style.width="100%";b.style.marginBottom="10px";b.onclick=fn;return b};
+  sh.append(mk("Edit schedules","primary",()=>{closeSheet();editPlanSchedules(L)}));
+  sh.append(mk("Rename","ghost",()=>renamePlan(L)));
+  sh.append(mk("Duplicate","ghost",()=>duplicatePlan(L)));
+  sh.append(mk("Delete","danger",()=>deletePlan(L)));
+  sh.append(mk("Cancel","ghost",closeSheet));
+  openSheet();
+}
+function newPlanForm(){
+  const sh=$("#sheet");sh.innerHTML="";
+  sh.append(el("h2","","New plan"),el("div","sub","Create a plan, optionally copied from an existing one, then edit its schedules."));
+  const f1=el("div","field");f1.append(Object.assign(el("label"),{textContent:"Name"}));const nm=el("input");nm.type="text";nm.placeholder="e.g. Autumn, Holiday";f1.append(nm);sh.append(f1);
+  const f2=el("div","field");f2.append(Object.assign(el("label"),{textContent:"Start from"}));const sel=el("select","sel");sel.append(new Option("Empty (build from scratch)",""));S.library.forEach(L=>sel.append(new Option("Copy of "+L.name,L.id)));f2.append(sel);sh.append(f2);
+  const act=el("div","actions");const cancel=el("button","btn ghost","Cancel");cancel.onclick=closeSheet;
+  const create=el("button","btn primary","Create & edit");
+  create.onclick=async()=>{const name=nm.value.trim();if(!name){nm.focus();return}
+    const src=S.library.find(x=>x.id===sel.value);
+    const entry={id:"pl"+Date.now(),name,note:"",schedules:src?clone(src.schedules||{}):{}};
+    S.library.push(entry);try{await API.saveLibrary(S.library)}catch(err){toast(err.message,"err");return}
+    closeSheet();S.ed.plan=entry.id;S.ed.zone=null;S.ed.work=null;go("editor");toast(src?`Created “${name}” from ${src.name}`:`Created “${name}”`,"ok")};
+  act.append(cancel,create);sh.append(act);openSheet();
+}
+function renamePlan(L){
+  const sh=$("#sheet");sh.innerHTML="";sh.append(el("h2","","Rename plan"));
+  const f=el("div","field");const nm=el("input");nm.type="text";nm.value=L.name;f.append(nm);sh.append(f);
+  const act=el("div","actions");const cancel=el("button","btn ghost","Cancel");cancel.onclick=closeSheet;
+  const save=el("button","btn primary","Save");save.onclick=async()=>{const v=nm.value.trim();if(!v){nm.focus();return}L.name=v;try{await API.saveLibrary(S.library)}catch(err){toast(err.message,"err");return}closeSheet();renderPlans();toast("Renamed","ok")};
+  act.append(cancel,save);sh.append(act);openSheet();
+}
+async function duplicatePlan(L){
+  const copy={id:"pl"+Date.now(),name:L.name+" copy",note:L.note||"",schedules:clone(L.schedules||{})};
+  S.library.push(copy);try{await API.saveLibrary(S.library)}catch(err){toast(err.message,"err");return}closeSheet();renderPlans();toast(`Duplicated as “${copy.name}”`,"ok");
+}
+function deletePlan(L){
+  const sh=$("#sheet");sh.innerHTML="";sh.append(el("h2","",`Delete “${L.name}”?`),el("div","sub","Removes this plan from your library. It doesn’t change anything live on Evohome."));
+  const act=el("div","actions");const cancel=el("button","btn ghost","Cancel");cancel.onclick=closeSheet;
+  const del=el("button","btn primary","Delete");del.style.background="var(--danger)";del.style.borderColor="var(--danger)";
+  del.onclick=async()=>{S.library=S.library.filter(x=>x.id!==L.id);try{await API.saveLibrary(S.library)}catch(err){toast(err.message,"err");return}closeSheet();renderPlans();toast("Plan deleted")};
+  act.append(cancel,del);sh.append(act);openSheet();
 }
 
 /* ---------------- SCHEDULE EDITOR ---------------- */
