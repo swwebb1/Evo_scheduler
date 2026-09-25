@@ -110,6 +110,18 @@ input[type=text],input[type=time]{width:100%;padding:12px 13px;background:var(--
 .stepper button{width:52px;height:52px;border-radius:50%;background:var(--surface-3);border:1px solid var(--line-strong);font-size:26px;font-weight:600;display:grid;place-items:center;color:var(--text)}
 .stepper button:active{background:var(--surface-2)}
 .stepper .big{font-size:44px;font-weight:700;font-variant-numeric:tabular-nums;min-width:120px;text-align:center}
+.stepper-sm{display:flex;align-items:center;gap:8px}
+.stepper-sm button{width:36px;height:36px;border-radius:8px;background:var(--surface-3);border:1px solid var(--line-strong);font-size:20px;font-weight:600;display:grid;place-items:center;color:var(--text);flex:0 0 auto}
+.stepper-sm button:active{background:var(--surface-2)}
+.stepper-sm .val{min-width:54px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.dayoff-btn{display:flex;align-items:center;gap:12px;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:15px 16px;margin:6px 0 2px}
+.dayoff-btn:active{transform:scale(.99)}
+.dayoff-btn.active{border-color:var(--accent);background:var(--accent-soft)}
+.dayoff-btn .ic{width:34px;height:34px;border-radius:9px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex:0 0 auto}
+.dayoff-btn.active .ic{background:var(--surface)}
+.dayoff-btn .ic svg{width:19px;height:19px}
+.dayoff-btn .nm{font-weight:600}
+.dayoff-btn .meta{font-size:13px;color:var(--text-dim)}
 .until-line{text-align:center;color:var(--text-dim);font-size:14px;margin:2px 0 16px}
 .until-line b{color:var(--text)}
 
@@ -156,7 +168,9 @@ const API={status:()=>jget("status"),zones:()=>jget("zones"),library:()=>jget("l
   apply:(libraryId,zoneIds)=>jsend("apply","POST",{libraryId,zoneIds}),
   boost:body=>jsend("boost","POST",body), cancel:zoneIds=>jsend("cancel","POST",{zoneIds}),
   live:id=>jget(`zones/${encodeURIComponent(id)}/live`), push:(id,schedule)=>jsend(`zones/${encodeURIComponent(id)}/push`,"POST",{schedule}),
-  saveLibrary:l=>jsend("library","PUT",l)};
+  saveLibrary:l=>jsend("library","PUT",l),
+  dayoff:()=>jget("dayoff"),dayoffCfg:()=>jget("dayoff/config"),saveDayoffCfg:c=>jsend("dayoff/config","PUT",c),
+  dayoffOn:()=>jsend("dayoff/activate","POST",{}),dayoffOff:()=>jsend("dayoff/cancel","POST",{})};
 
 const $=s=>document.querySelector(s), el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
 const DAYS=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"], DFULL={Mon:"Monday",Tue:"Tuesday",Wed:"Wednesday",Thu:"Thursday",Fri:"Friday",Sat:"Saturday",Sun:"Sunday"};
@@ -181,8 +195,20 @@ function applyTheme(){const p=themePref();const light=p==="light"||(p==="system"
 mq.addEventListener("change",()=>{if(themePref()==="system")applyTheme()});
 applyTheme();
 
+/* increment + reusable +/- stepper */
+function incr(){return parseFloat(localStorage.getItem("evo-increment")||"1")}
+function stepper(val,min,max,onChange,big){
+  const w=el("div",big?"stepper":"stepper-sm");
+  const mn=el("button",null,"–"),v=el("div","val"+(big?" big":""),fmtT(val)),pl=el("button",null,"+");
+  let cur=val;
+  const set=x=>{cur=Math.max(min,Math.min(max,Math.round(x*2)/2));v.textContent=fmtT(cur);if(onChange)onChange(cur)};
+  mn.onclick=()=>set(cur-incr());pl.onclick=()=>set(cur+incr());
+  w.append(mn,v,pl);w.get=()=>cur;w.set=x=>{cur=Math.max(min,Math.min(max,x));v.textContent=fmtT(cur)};
+  return w;
+}
+
 /* state + router */
-const S={zmap:{},library:[],shortcuts:[],status:null,ed:{plan:null,zone:null,work:null,base:null,day:"Mon"}};
+const S={zmap:{},library:[],shortcuts:[],status:null,dayoff:{active:false},dayoffCfg:null,ed:{plan:null,zone:null,work:null,base:null,day:"Mon"}};
 let stack=["home"];
 function go(v){stack.push(v);render()}
 function goBack(){stack.pop();render()}
@@ -192,8 +218,8 @@ async function init(){await refreshAll()}
 async function refreshAll(spin){
   try{
     if(spin)toast("Refreshing…");
-    const [zs,lib,sc,st]=await Promise.all([API.zones(),API.library(),API.shortcuts(),API.status()]);
-    S.zmap={};zs.forEach(z=>S.zmap[z.id]=z);S.library=lib||[];S.shortcuts=sc||[];S.status=st;
+    const [zs,lib,sc,st,doff,docfg]=await Promise.all([API.zones(),API.library(),API.shortcuts(),API.status(),API.dayoff(),API.dayoffCfg()]);
+    S.zmap={};zs.forEach(z=>S.zmap[z.id]=z);S.library=lib||[];S.shortcuts=sc||[];S.status=st;S.dayoff=doff||{active:false};S.dayoffCfg=docfg||null;
     render();
   }catch(err){S.status={connected:false};render();renderError(err.message||err)}
 }
@@ -228,6 +254,7 @@ function renderError(msg){$("#main").innerHTML=`<div class="empty">Can’t reach
 /* ---------------- HOME: quick boost + current status ---------------- */
 function renderHome(){
   const m=$("#main");m.innerHTML="";const st=S.status||{};
+  renderDayoffButton(m);
   m.append(el("div","eyebrow","Quick boost"));
   S.shortcuts.forEach(sc=>{
     const b=el("button","boost");const ic=el("span","ic");
@@ -256,6 +283,55 @@ function renderHome(){
   if(!zones.length)tbl.append(el("div","empty","No rooms."));
   m.append(tbl);
 }
+function renderDayoffButton(m){
+  const d=S.dayoff||{};
+  const b=el("button","dayoff-btn"+(d.active?" active":""));
+  const ic=el("span","ic");ic.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6 19 19M19 5l-1.4 1.4M6.4 17.6 5 19"/></svg>';
+  const box=el("div");box.style.flex="1";
+  if(d.active){
+    box.append(el("div","nm","Day off — on until midnight"));
+    box.append(el("div","meta",`${d.planName||""} ${d.sourceDay||""} · ${d.zoneCount||0} rooms`));
+    const end=el("span","meta","End now");end.style.color="var(--accent)";end.style.fontWeight="700";
+    b.append(ic,box,end);
+    b.onclick=async()=>{try{await API.dayoffOff();toast("Day off ended — back to schedule");await refreshAll()}catch(err){toast(err.message||err,"err")}};
+  }else{
+    box.append(el("div","nm","Day off"));
+    box.append(el("div","meta","Run a chosen day’s schedule until midnight"));
+    b.append(ic,box);
+    b.onclick=()=>{const c=S.dayoffCfg;if(c&&c.planId&&(c.zoneIds||[]).length)dayoffConfirm();else{toast("Set up Day off in Settings first");go("settings")}};
+  }
+  m.append(b);
+}
+function dayoffConfirm(){
+  const c=S.dayoffCfg;const plan=S.library.find(x=>x.id===c.planId);
+  const sh=$("#sheet");sh.innerHTML="";
+  sh.append(el("h2","","Take the day off?"));
+  sh.append(el("div","sub",`Apply ${plan?plan.name:"your plan"}’s ${c.sourceDay} schedule to ${(c.zoneIds||[]).length} rooms for the rest of today, then back to normal at midnight.`));
+  const act=el("div","actions");const cancel=el("button","btn ghost","Cancel");cancel.onclick=closeSheet;
+  const ok=el("button","btn primary","Start day off");
+  ok.onclick=async()=>{ok.disabled=true;ok.innerHTML='<span class="spin"></span> Starting…';
+    try{await API.dayoffOn();closeSheet();toast("Day off on — back to normal at midnight","ok");await refreshAll()}
+    catch(err){ok.disabled=false;ok.textContent="Start day off";toast("Failed: "+(err.message||err),"err")}};
+  act.append(cancel,ok);sh.append(act);openSheet();
+}
+function dayoffConfigForm(){
+  const c=S.dayoffCfg||{planId:null,sourceDay:"Sat",zoneIds:[]};
+  const heating=Object.values(S.zmap).filter(z=>z.type!=="dhw");const sel=new Set(c.zoneIds||[]);
+  let day=c.sourceDay||"Sat";
+  const sh=$("#sheet");sh.innerHTML="";
+  sh.append(el("h2","","Day off setup"),el("div","sub","Pick a plan, the day whose schedule to borrow, and which rooms it applies to."));
+  const f1=el("div","field");f1.append(Object.assign(el("label"),{textContent:"Plan"}));const ps=el("select","sel");ps.append(new Option("Choose a plan…",""));S.library.forEach(L=>ps.append(new Option(L.name,L.id)));ps.value=c.planId||"";f1.append(ps);sh.append(f1);
+  const f2=el("div","field");f2.append(Object.assign(el("label"),{textContent:"Use this day’s schedule"}));const dseg=el("div","seg");
+  DAYS.forEach(d=>{const b=el("button",day===d?"on":"",d);b.onclick=()=>{day=d;[...dseg.children].forEach(x=>x.className="");b.className="on"};dseg.append(b)});
+  f2.append(dseg);sh.append(f2);
+  const f3=el("div","field");f3.append(Object.assign(el("label"),{textContent:"Rooms"}));const chips=el("div","chips");
+  heating.forEach(z=>{const ch=el("button","chip"+(sel.has(z.id)?" on":""),z.name);ch.onclick=()=>{sel.has(z.id)?sel.delete(z.id):sel.add(z.id);ch.className="chip"+(sel.has(z.id)?" on":"")};chips.append(ch)});
+  f3.append(chips);sh.append(f3);
+  const act=el("div","actions");const cancel=el("button","btn ghost","Cancel");cancel.onclick=closeSheet;
+  const save=el("button","btn primary","Save");
+  save.onclick=async()=>{if(!ps.value){toast("Pick a plan","err");return}const cfg={planId:ps.value,sourceDay:day,zoneIds:[...sel]};try{await API.saveDayoffCfg(cfg);S.dayoffCfg=cfg;closeSheet();toast("Day off saved","ok")}catch(err){toast(err.message||err,"err")}};
+  act.append(cancel,save);sh.append(act);openSheet();
+}
 
 /* ---------------- BOOST (shortcut fire) ---------------- */
 async function fireBoost(sc){
@@ -277,8 +353,8 @@ function overrideSheet(z){
   // stepper
   const step=el("div","stepper");
   const minus=el("button",null,"–"), big=el("div","big",fmtT(temp)), plus=el("button",null,"+");
-  const setT=v=>{temp=Math.max(zm.min,Math.min(zm.max,Math.round(v)));big.textContent=fmtT(temp);syncQuick()};
-  minus.onclick=()=>setT(temp-1);plus.onclick=()=>setT(temp+1);
+  const setT=v=>{temp=Math.max(zm.min,Math.min(zm.max,Math.round(v*2)/2));big.textContent=fmtT(temp);syncQuick()};
+  minus.onclick=()=>setT(temp-incr());plus.onclick=()=>setT(temp+incr());
   step.append(minus,big,plus);sh.append(step);
   // quick temps
   const q=el("div","seg");q.style.justifyContent="center";q.style.marginBottom="18px";
@@ -322,7 +398,17 @@ function renderSettings(){
   // edit boosts / schedules
   const i1=el("button","set-item");i1.append(el("span","nm","Edit boosts"),el("span","chev","›"));i1.onclick=()=>go("boosts");
   const i2=el("button","set-item");i2.append(el("span","nm","Edit plans"),el("span","chev","›"));i2.onclick=()=>go("plans");
-  m.append(i1,i2);
+  const i3=el("button","set-item");i3.append(el("span","nm","Day off setup"),el("span","chev","›"));i3.onclick=()=>dayoffConfigForm();
+  m.append(i1,i2,i3);
+  // button increment
+  const inf=el("div","field");inf.style.marginTop="12px";inf.append(Object.assign(el("label"),{textContent:"Button increment"}));
+  const iseg=el("div","seg");
+  [["0.5°","0.5"],["1°","1"]].forEach(([lbl,val])=>{
+    const b=el("button",(localStorage.getItem("evo-increment")||"1")===val?"on":"",lbl);
+    b.onclick=()=>{localStorage.setItem("evo-increment",val);[...iseg.children].forEach(x=>x.className="");b.className="on"};
+    iseg.append(b);
+  });
+  inf.append(iseg);m.append(inf);
   // theme
   const tf=el("div","field");tf.style.marginTop="12px";tf.append(Object.assign(el("label"),{textContent:"Theme"}));
   const seg=el("div","seg");
@@ -368,13 +454,13 @@ function boostForm(sc){
   const f2=el("div","field");f2.append(Object.assign(el("label"),{textContent:"Rooms"}));const chips=el("div","chips");
   heating.forEach(z=>{const c=el("button","chip"+(sel.has(z.id)?" on":""),z.name);c.onclick=()=>{sel.has(z.id)?sel.delete(z.id):sel.add(z.id);c.className="chip"+(sel.has(z.id)?" on":"")};chips.append(c)});
   f2.append(chips);sh.append(f2);
-  const f3=el("div","field");f3.append(Object.assign(el("label"),{textContent:"Temperature"}));const tr=el("div","temprow");const rng=el("input");rng.type="range";rng.min=5;rng.max=28;rng.step=.5;rng.value=sc.temp;const tv=el("span","v",fmtT(sc.temp));rng.oninput=()=>tv.textContent=fmtT(+rng.value);tr.append(rng,tv);f3.append(tr);sh.append(f3);
+  const f3=el("div","field");f3.append(Object.assign(el("label"),{textContent:"Temperature"}));const st3=stepper(sc.temp,5,28,null,true);f3.append(st3);sh.append(f3);
   const f4=el("div","field");f4.append(Object.assign(el("label"),{textContent:"For how long"}));const seg=el("div","seg");let mins=sc.minutes;
   [["30m",30],["1h",60],["2h",120],["3h",180]].forEach(([lbl,mn])=>{const b=el("button",mins===mn?"on":"",lbl);b.onclick=()=>{mins=mn;[...seg.children].forEach(x=>x.className="");b.className="on"};seg.append(b)});f4.append(seg);sh.append(f4);
   const act=el("div","actions");
   if(!isNew){const del=el("button","btn danger","Delete");del.onclick=async()=>{S.shortcuts=S.shortcuts.filter(x=>x.id!==sc.id);await API.saveShortcuts(S.shortcuts);closeSheet();renderBoosts();toast("Boost deleted")};act.append(del)}
   const cancel=el("button","btn ghost","Cancel");cancel.onclick=closeSheet;const save=el("button","btn primary","Save");
-  save.onclick=async()=>{const name=nm.value.trim();if(!name){nm.focus();return}const out={id:sc.id,name,zoneIds:[...sel],temp:+rng.value,minutes:mins};
+  save.onclick=async()=>{const name=nm.value.trim();if(!name){nm.focus();return}const out={id:sc.id,name,zoneIds:[...sel],temp:st3.get(),minutes:mins};
     const i=S.shortcuts.findIndex(x=>x.id===sc.id);if(i>=0)S.shortcuts[i]=out;else S.shortcuts.push(out);await API.saveShortcuts(S.shortcuts);closeSheet();renderBoosts();toast("Boost saved","ok")};
   act.append(cancel,save);sh.append(act);openSheet();
 }
@@ -462,12 +548,13 @@ function renderEditor(){
     rr.append(bar);rr.onclick=()=>{e.day=d;renderEditor()};wk.append(rr)});
   m.append(wk);
   const ax=el("div","axis");ax.append(el("span"));const mk=el("div","m");["00","06","12","18","24"].forEach(h=>mk.append(el("span",null,h)));ax.append(mk);m.append(ax);
-  const de=el("div","deday");de.append(el("h3","",DFULL[e.day]));const list=sortSp(e.work[e.day]||[]);e.work[e.day]=list;
+  const MAXSP=(z&&z.maxSwitchpoints)||6;
+  const de=el("div","deday");const h=el("h3","",DFULL[e.day]);const cnt=el("span");cnt.style.cssText="font-weight:500;color:var(--text-faint);font-size:12px;margin-left:8px";h.append(cnt);de.append(h);const list=sortSp(e.work[e.day]||[]);e.work[e.day]=list;cnt.textContent=`${list.length} / ${MAXSP}`;
   list.forEach(sp=>{const r=el("div","sp");const c=el("span","c");c.style.background=tempColor(sp.temp);
     const tm=el("input");tm.type="time";tm.value=sp.time;tm.onchange=()=>{sp.time=tm.value;commit()};
-    const t=el("div","t");const rg=el("input");rg.type="range";rg.min=z?.min??5;rg.max=z?.max??28;rg.step=.5;rg.value=sp.temp;const v=el("span","val",fmtT(sp.temp));rg.oninput=()=>{sp.temp=+rg.value;v.textContent=fmtT(sp.temp);c.style.background=tempColor(sp.temp)};rg.onchange=commit;t.append(rg,v);
+    const t=el("div","t");const stp=stepper(sp.temp,z?.min??5,z?.max??28,nv=>{sp.temp=nv;commit()});t.append(stp);
     const rm=el("button","rm","✕");rm.onclick=()=>{const a=e.work[e.day];a.splice(a.indexOf(sp),1);commit()};r.append(c,tm,t,rm);de.append(r)});
-  const foot=el("div","defoot");const add=el("button","btn ghost","+ Add change");add.onclick=()=>{e.work[e.day].push({time:"12:00",temp:20});commit()};
+  const foot=el("div","defoot");const add=el("button","btn ghost","+ Add change");add.disabled=list.length>=MAXSP;if(add.disabled)add.title=`Evohome allows at most ${MAXSP} changes per day`;add.onclick=()=>{if(e.work[e.day].length>=MAXSP)return;e.work[e.day].push({time:"12:00",temp:20});commit()};
   const copy=el("div","copy");const cs=el("select","sel");cs.style.minWidth="130px";cs.append(new Option("Copy day to…",""),new Option("Mon–Fri","weekdays"),new Option("Weekend","weekend"),new Option("Every day","all"));
   cs.onchange=()=>{const v=cs.value;if(!v)return;const src=clone(e.work[e.day]);(v==="all"?DAYS:v==="weekdays"?["Mon","Tue","Wed","Thu","Fri"]:["Sat","Sun"]).forEach(d=>{if(d!==e.day)e.work[d]=clone(src)});cs.value="";commit();toast("Day copied")};
   copy.append(cs);foot.append(add,copy);de.append(foot);m.append(de);

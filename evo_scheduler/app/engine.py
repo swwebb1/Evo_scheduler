@@ -116,18 +116,44 @@ class EvoEngine:
                 return ent
         raise KeyError(zone_id)
 
+    def _max_sp(self, z) -> int:
+        try:
+            cap = z.schedule_capabilities or {}
+            return int(cap.get("max_switchpoints_per_day") or cap.get("maxSwitchpointsPerDay") or 6)
+        except Exception:
+            return 6
+
     async def zones(self) -> list[dict]:
         if not self.connected:
             raise RuntimeError("not connected")
         out = []
         for z in self._tcs.zones:
             out.append({"id": str(z.id), "name": z.name, "type": "heating",
-                        "min": float(z.min_heat_setpoint), "max": float(z.max_heat_setpoint)})
+                        "min": float(z.min_heat_setpoint), "max": float(z.max_heat_setpoint),
+                        "maxSwitchpoints": self._max_sp(z)})
         if self._tcs.hotwater:
             hw = self._tcs.hotwater
             out.append({"id": str(hw.id), "name": hw.name or "Hot Water",
-                        "type": "dhw", "min": 0, "max": 1})
+                        "type": "dhw", "min": 0, "max": 1, "maxSwitchpoints": 6})
         return out
+
+    # ---- time helpers (for day-off) --------------------------------------
+    def today_dow(self) -> str:
+        return DAY_ORDER[self._local_now().weekday()]
+
+    def next_midnight_iso(self) -> str:
+        n = self._local_now()
+        m = (n + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        return m.isoformat()
+
+    def now_ge(self, iso: str) -> bool:
+        try:
+            t = datetime.fromisoformat(str(iso))
+            if t.tzinfo is None:
+                t = t.replace(tzinfo=UTC)
+            return self._local_now() >= t
+        except Exception:
+            return False
 
     # ---- schedule cache + next change ------------------------------------
     async def _warm_schedules(self, force: bool = False) -> None:

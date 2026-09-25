@@ -1,6 +1,7 @@
 """Evo Scheduler backend — FastAPI served through Home Assistant ingress."""
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -57,6 +58,7 @@ async def lifespan(app: FastAPI):
         _LOGGER.info("Connected to TCC — %d zone(s)", len(await engine.zones()))
     except Exception as err:
         _LOGGER.error("Startup: could not connect to Evohome/TCC: %s", err)
+    asyncio.create_task(_dayoff_watch())
     yield
     if engine:
         await engine.close()
@@ -216,6 +218,108 @@ async def put_library(lib: list = Body(...)):
     except OSError as err:
         raise HTTPException(500, f"Could not save library: {err}")
     return {"ok": True}
+
+
+# ---- day off ---------------------------------------------------------------
+DAYOFF_CONFIG = Path("/data/dayoff_config.json")
+DAYOFF_STATE = Path("/data/dayoff_state.json")
+
+
+def _dayoff_default_cfg():
+    return {"planId": None, "sourceDay": "Sat", "zoneIds": []}
+
+
+@app.get("/dayoff/config")
+async def dayoff_get_config():
+    return _read(DAYOFF_CONFIG, _dayoff_default_cfg())
+
+
+@app.put("/dayoff/config")
+async def dayoff_put_config(cfg: dict = Body(...)):
+    _write(DAYOFF_CONFIG, {"planId": cfg.get("planId"),
+                           "sourceDay": cfg.get("sourceDay", "Sat"),
+                           "zoneIds": cfg.get("zoneIds") or []})
+    return {"ok": True}
+
+
+@app.get("/dayoff")
+async def dayoff_status():
+    st = _read(DAYOFF_STATE, {}) or {}
+    if not st.get("active"):
+        return {"active": False}
+    return {"active": True, "revertAt": st.get("revertAt"), "planName": st.get("planName"),
+            "sourceDay": st.get("sourceDay"), "zoneCount": len(st.get("zones", {}))}
+
+
+@app.post("/dayoff/activate")
+async def dayoff_activate():
+    eng = _ready()
+    cfg = _read(DAYOFF_CONFIG, _dayoff_default_cfg())
+    if not cfg.get("planId") or not cfg.get("zoneIds"):
+        raise HTTPException(400, "Day off isn't set up yet")
+    plan = _lib_entry(cfg["planId"])
+    src_day = cfg.get("sourceDay", "Sat")
+    dow = eng.today_dow()
+    saved = {}
+    for zid in cfg["zoneIds"]:
+        src = (plan.get("schedules", {}).get(zid) or {}).get(src_day)
+        if not src:
+            continue
+        try:
+            live = await eng.get_live(zid)
+        except Exception as err:
+            _LOGGER.warning("day-off get_live %s failed: %s", zid, err)
+            continue
+        saved[zid] = live.get(dow, [])
+        newsched = dict(live)
+        newsched[dow] = src
+        try:
+            await eng.push(zid, newsched)
+        except Exception as err:
+            _LOGGER.warning("day-off push %s failed: %s", zid, err)
+            saved.pop(zid, None)
+    if not saved:
+        raise HTTPException(422, "Nothing applied — check the plan covers those rooms")
+    state = {"active": True, "revertAt": eng.next_midnight_iso(), "dow": dow, "zones": saved,
+             "planName": plan.get("name"), "sourceDay": src_day, "zoneCount": len(saved)}
+    _write(DAYOFF_STATE, state)
+    return {"active": True, "revertAt": state["revertAt"], "planName": state["planName"],
+            "sourceDay": src_day, "zoneCount": len(saved)}
+
+
+@app.post("/dayoff/cancel")
+async def dayoff_cancel():
+    await _revert_dayoff()
+    return {"ok": True}
+
+
+async def _revert_dayoff():
+    st = _read(DAYOFF_STATE, None)
+    if not st or not st.get("active"):
+        return
+    dow = st.get("dow")
+    for zid, orig in (st.get("zones") or {}).items():
+        try:
+            live = await engine.get_live(zid)
+            live[dow] = orig
+            await engine.push(zid, live)
+        except Exception as err:
+            _LOGGER.warning("day-off revert %s failed: %s", zid, err)
+    _write(DAYOFF_STATE, {"active": False})
+    _LOGGER.info("Day off reverted to normal schedule")
+
+
+async def _dayoff_watch():
+    while True:
+        try:
+            st = _read(DAYOFF_STATE, None)
+            if st and st.get("active") and engine and engine.connected:
+                if engine.now_ge(st.get("revertAt")):
+                    _LOGGER.info("Day off reached midnight — reverting")
+                    await _revert_dayoff()
+        except Exception as err:
+            _LOGGER.warning("day-off watch error: %s", err)
+        await asyncio.sleep(60)
 
 
 app.mount("/", StaticFiles(directory=str(STATIC), html=True), name="spa")

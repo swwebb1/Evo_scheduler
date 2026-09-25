@@ -1,4 +1,9 @@
 # Changelog
+## 0.5.0
+- Replaced all sliders with +/- buttons (schedule editor, boosts, room override) for reliable control on phones.
+- Settings: added a "Button increment" control (0.5 or 1, default 1) that all +/- buttons use; Theme now lives here too.
+- Schedule editor now shows a "used / max" count and stops you adding changes beyond your controller's real limit (6 per day).
+- New "Day off" button on the home screen: applies a chosen plan-day's schedule to selected rooms for the rest of today, then automatically reverts to your normal schedule at midnight. Configure it in Settings -> Day off setup.
 ## 0.4.0
 - Create new plans from the app (Settings -> Edit plans -> + New plan), optionally cloning an existing plan to start from.
 - Manage plans: rename, duplicate, delete.
