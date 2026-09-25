@@ -319,7 +319,7 @@ async def _dayoff_watch():
                     await _revert_dayoff()
         except Exception as err:
             _LOGGER.warning("day-off watch error: %s", err)
-        await asyncio.sleep(60)
+        await asyncio.sleep(300)
 
 
 app.mount("/", StaticFiles(directory=str(STATIC), html=True), name="spa")
