@@ -1,4 +1,6 @@
 # Changelog
+## 0.6.2
+- New artwork: the schedule-line mark now traces the left-half gable outline of 34 St Magdalene's (semi-detached, ridge-down), warm at the ridge and cool at the ground. Updated app icon, add-on logo, and in-app header glyph; sidebar panel icon set to mdi:home-thermometer-outline.
 ## 0.6.1
 - Local backend: harden "Load schedules from controller". The RF schedule fetch (ramses_cc.get_zone_schedule) now retries up to 3 times with a short back-off on the transient `error_get_schedule` RF error, and zones are spaced out during a full pull to ease RF contention. Fixes the occasional failure when pulling immediately after a schedule write.
 ## 0.6.0
