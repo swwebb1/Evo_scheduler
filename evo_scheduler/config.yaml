@@ -1,5 +1,5 @@
 name: Evo Scheduler
-version: "0.5.0"
+version: "0.6.0"
 slug: evo_scheduler
 description: >-
   View, store and push Evohome weekly heating schedules — a library of
@@ -17,12 +17,14 @@ panel_title: Evo Scheduler
 boot: auto
 startup: application
 hassio_api: false
-homeassistant_api: false
+homeassistant_api: true
 options:
+  backend: cloud
   username: ""
   password: ""
   location_idx: 0
 schema:
-  username: str
-  password: password
+  backend: "list(cloud|local)"
+  username: str?
+  password: password?
   location_idx: int

@@ -170,7 +170,8 @@ const API={status:()=>jget("status"),zones:()=>jget("zones"),library:()=>jget("l
   live:id=>jget(`zones/${encodeURIComponent(id)}/live`), push:(id,schedule)=>jsend(`zones/${encodeURIComponent(id)}/push`,"POST",{schedule}),
   saveLibrary:l=>jsend("library","PUT",l),
   dayoff:()=>jget("dayoff"),dayoffCfg:()=>jget("dayoff/config"),saveDayoffCfg:c=>jsend("dayoff/config","PUT",c),
-  dayoffOn:()=>jsend("dayoff/activate","POST",{}),dayoffOff:()=>jsend("dayoff/cancel","POST",{})};
+  dayoffOn:()=>jsend("dayoff/activate","POST",{}),dayoffOff:()=>jsend("dayoff/cancel","POST",{}),
+  pull:()=>jsend("pull","POST",{})};
 
 const $=s=>document.querySelector(s), el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
 const DAYS=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"], DFULL={Mon:"Monday",Tue:"Tuesday",Wed:"Wednesday",Thu:"Thursday",Fri:"Friday",Sat:"Saturday",Sun:"Sunday"};
@@ -219,7 +220,7 @@ async function refreshAll(spin){
   try{
     if(spin)toast("Refreshing…");
     const [zs,lib,sc,st,doff,docfg]=await Promise.all([API.zones(),API.library(),API.shortcuts(),API.status(),API.dayoff(),API.dayoffCfg()]);
-    S.zmap={};zs.forEach(z=>S.zmap[z.id]=z);S.library=lib||[];S.shortcuts=sc||[];S.status=st;S.dayoff=doff||{active:false};S.dayoffCfg=docfg||null;
+    S.zmap={};zs.forEach(z=>S.zmap[z.id]=z);S.library=lib||[];S.shortcuts=sc||[];S.status=st;S.backend=(st&&st.backend)||"cloud";S.dayoff=doff||{active:false};S.dayoffCfg=docfg||null;
     render();
   }catch(err){S.status={connected:false};render();renderError(err.message||err)}
 }
@@ -400,6 +401,15 @@ function renderSettings(){
   const i2=el("button","set-item");i2.append(el("span","nm","Edit plans"),el("span","chev","›"));i2.onclick=()=>go("plans");
   const i3=el("button","set-item");i3.append(el("span","nm","Day off setup"),el("span","chev","›"));i3.onclick=()=>dayoffConfigForm();
   m.append(i1,i2,i3);
+  // local (ramses) backend: pull schedules from the controller over RF
+  if(S.backend==="local"){
+    const ip=el("button","set-item");ip.append(el("span","nm","Load schedules from controller"),el("span","chev","↻"));
+    ip.onclick=async()=>{const nm=ip.querySelector(".nm");const was=nm.textContent;nm.textContent="Loading from controller…";ip.disabled=true;
+      try{const r=await API.pull();toast(`Loaded ${r.loaded}/${r.total} zones from controller`,r.ok?"ok":"err");await refreshAll()}
+      catch(err){toast(err.message||err,"err")}finally{nm.textContent=was;ip.disabled=false}};
+    m.append(ip);
+    const note=el("div","sub");note.style.cssText="margin:-2px 2px 4px;font-size:12px";note.textContent="Local mode — controlling Evohome directly over RF (no cloud).";m.append(note);
+  }
   // button increment
   const inf=el("div","field");inf.style.marginTop="12px";inf.append(Object.assign(el("label"),{textContent:"Button increment"}));
   const iseg=el("div","seg");

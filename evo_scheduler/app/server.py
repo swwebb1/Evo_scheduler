@@ -14,6 +14,7 @@ from fastapi.staticfiles import StaticFiles
 
 from evohomeasync2 import exceptions as evo_exc
 from engine import EvoEngine
+from ramses_engine import RamsesEngine
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 _LOGGER = logging.getLogger("evo.server")
@@ -24,7 +25,8 @@ SHORTCUTS = Path("/data/shortcuts.json")
 STATE = Path("/data/state.json")
 STATIC = Path(__file__).parent / "static"
 
-engine: EvoEngine | None = None
+engine = None          # EvoEngine (cloud) or RamsesEngine (local)
+BACKEND = "cloud"
 
 
 def load_options() -> dict:
@@ -49,15 +51,21 @@ def _write(path: Path, data) -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global engine
+    global engine, BACKEND
     opt = load_options()
-    engine = EvoEngine(opt.get("username", ""), opt.get("password", ""),
-                       int(opt.get("location_idx", 0)))
+    BACKEND = (opt.get("backend") or "cloud").lower()
+    if BACKEND == "local":
+        engine = RamsesEngine(int(opt.get("location_idx", 0)))
+        src = "ramses_cc (local RF)"
+    else:
+        engine = EvoEngine(opt.get("username", ""), opt.get("password", ""),
+                           int(opt.get("location_idx", 0)))
+        src = "TCC cloud"
     try:
         await engine.start()
-        _LOGGER.info("Connected to TCC — %d zone(s)", len(await engine.zones()))
+        _LOGGER.info("Connected via %s — %d zone(s)", src, len(await engine.zones()))
     except Exception as err:
-        _LOGGER.error("Startup: could not connect to Evohome/TCC: %s", err)
+        _LOGGER.error("Startup: could not connect via %s: %s", src, err)
     asyncio.create_task(_dayoff_watch())
     yield
     if engine:
@@ -67,8 +75,10 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan, title="Evo Scheduler")
 
 
-def _ready() -> EvoEngine:
+def _ready():
     if engine is None or not engine.connected:
+        if BACKEND == "local":
+            raise HTTPException(503, "Not connected to ramses_cc yet — check the add-on log and that the RAMSES RF integration is loaded.")
         raise HTTPException(503, "Not connected to Evohome yet — check the add-on log and credentials.")
     return engine
 
@@ -97,13 +107,14 @@ def _seed_shortcuts(zones: list[dict]) -> list:
 @app.get("/status")
 async def status():
     if not (engine and engine.connected):
-        return {"connected": False, "plan": None, "zones": []}
+        return {"connected": False, "backend": BACKEND, "plan": None, "zones": []}
     try:
         zones = await engine.snapshot()
     except Exception as err:
         _LOGGER.warning("snapshot failed: %s", err)
         zones = []
-    return {"connected": True, "plan": _read(STATE, {}).get("plan"), "zones": zones}
+    return {"connected": True, "backend": BACKEND,
+            "plan": _read(STATE, {}).get("plan"), "zones": zones}
 
 
 @app.post("/apply")
@@ -124,6 +135,8 @@ async def apply(payload: dict = Body(...)):
             results.append({"zone": zid, "status": f"rejected: {err}"})
         except evo_exc.ApiRateLimitExceededError:
             results.append({"zone": zid, "status": "rate-limited"})
+        except Exception as err:
+            results.append({"zone": zid, "status": f"error: {err}"})
     applied = [r["zone"] for r in results if r["status"] == "ok"]
     plan = {"name": entry.get("name"), "libraryId": entry.get("id"),
             "zoneIds": applied, "zoneCount": len(applied),
@@ -148,6 +161,10 @@ async def boost(payload: dict = Body(...)):
                                minutes=payload.get("minutes"), until_iso=payload.get("until"))
     except evo_exc.ApiRateLimitExceededError:
         raise HTTPException(429, "TCC rate limit — wait a minute and retry")
+    except HTTPException:
+        raise
+    except Exception as err:
+        raise HTTPException(502, f"Boost failed: {err}")
 
 
 @app.post("/cancel")
@@ -179,6 +196,19 @@ async def get_zones():
     return await _ready().zones()
 
 
+@app.post("/pull")
+async def pull(payload: dict = Body(default=None)):
+    """Load schedules from the controller into the ramses entities (local backend only)."""
+    eng = _ready()
+    if BACKEND != "local" or not hasattr(eng, "pull"):
+        raise HTTPException(400, "Load-from-controller is only available on the local (ramses) backend")
+    zone_ids = (payload or {}).get("zoneIds")
+    try:
+        return await eng.pull(zone_ids)
+    except Exception as err:
+        raise HTTPException(502, f"Load from controller failed: {err}")
+
+
 @app.get("/zones/{zone_id}/live")
 async def get_live(zone_id: str):
     try:
@@ -189,6 +219,10 @@ async def get_live(zone_id: str):
         raise HTTPException(404, "No schedule available for this zone")
     except evo_exc.ApiRateLimitExceededError:
         raise HTTPException(429, "TCC rate limit — wait a minute and retry")
+    except HTTPException:
+        raise
+    except Exception as err:
+        raise HTTPException(502, f"Couldn't read schedule: {err}")
 
 
 @app.post("/zones/{zone_id}/push")
@@ -204,6 +238,10 @@ async def push(zone_id: str, payload: dict = Body(...)):
         raise HTTPException(422, f"Evohome rejected the schedule: {err}")
     except evo_exc.ApiRateLimitExceededError:
         raise HTTPException(429, "TCC rate limit — wait a minute and retry")
+    except HTTPException:
+        raise
+    except Exception as err:
+        raise HTTPException(502, f"Couldn't save schedule: {err}")
 
 
 @app.get("/library")

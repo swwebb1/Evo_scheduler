@@ -1,4 +1,9 @@
 # Changelog
+## 0.6.0
+- New **local backend**: control Evohome directly through the ramses_cc RF dongle, with no Honeywell cloud (TCC) dependency. Choose it in the add-on **Configuration -> backend: local** (default stays `cloud`). Requires the RAMSES RF integration loaded; the add-on talks to it via Home Assistant (homeassistant_api).
+- Status, boosts/overrides, back-to-schedule, and full schedule read/write all work locally over RF (ramses_cc set_zone_mode / reset_zone_mode / get_zone_schedule / set_zone_schedule). The library, quick boosts and Day off are unchanged and backend-agnostic (zones keyed by the controller's own zone names, so your saved plans just work either way).
+- Settings gains **Load schedules from controller** (local mode only): pulls each zone's live weekly schedule from the controller over RF into the app.
+- TCC username/password are now optional (only needed for the cloud backend).
 ## 0.5.0
 - Replaced all sliders with +/- buttons (schedule editor, boosts, room override) for reliable control on phones.
 - Settings: added a "Button increment" control (0.5 or 1, default 1) that all +/- buttons use; Theme now lives here too.
