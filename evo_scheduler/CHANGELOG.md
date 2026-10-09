@@ -1,4 +1,6 @@
 # Changelog
+## 0.6.3
+- New app icon: a 3D render of the house — the left-half gable with the front entrance return (angled roof, six openings: four gable windows, a large ground-floor window and the front door), warm at the ridge and cool at the ground. (Icon only this release; the add-on logo and in-app header mark are unchanged.)
 ## 0.6.2
 - New artwork: the schedule-line mark now traces the left-half gable outline of 34 St Magdalene's (semi-detached, ridge-down), warm at the ridge and cool at the ground. Updated app icon, add-on logo, and in-app header glyph; sidebar panel icon set to mdi:home-thermometer-outline.
 ## 0.6.1
