@@ -220,17 +220,40 @@ class RamsesEngine:
         sch = (st.get("attributes", {}) or {}).get("schedule")
         return sch if isinstance(sch, list) and sch else None
 
+    async def _fetch_rf(self, entity_id: str, attempts: int = 3, gap: float = 3.0):
+        """Force ramses to fetch a zone's schedule from the controller over RF.
+
+        Retries on the transient 'error_get_schedule' RF error, which the
+        controller returns when its RF channel is still busy (e.g. right after
+        a schedule write). Returns the schedule list, or None if it never
+        populated; re-raises the last error if every attempt errored.
+        """
+        last_err = None
+        for i in range(attempts):
+            try:
+                await self._call("ramses_cc", "get_zone_schedule", {"entity_id": entity_id})
+                for _ in range(8):
+                    await asyncio.sleep(1.0)
+                    sch = await self._read_schedule_attr(entity_id)
+                    if sch:
+                        return sch
+            except Exception as err:
+                last_err = err
+            if i < attempts - 1:
+                await asyncio.sleep(gap)
+        if last_err:
+            raise last_err
+        return None
+
     async def get_live(self, zone_id: str) -> dict:
         z = self._find(zone_id)
         sch = await self._read_schedule_attr(z["entity_id"])
         if sch is None:
-            # ask ramses to fetch it from the controller over RF, then poll
-            await self._call("ramses_cc", "get_zone_schedule", {"entity_id": z["entity_id"]})
-            for _ in range(10):
-                await asyncio.sleep(1.0)
-                sch = await self._read_schedule_attr(z["entity_id"])
-                if sch:
-                    break
+            # not cached on the entity yet — fetch from the controller (with retry)
+            try:
+                sch = await self._fetch_rf(z["entity_id"])
+            except Exception as err:
+                raise RuntimeError(f"Schedule not available yet ({err}) — try again")
         if sch is None:
             raise RuntimeError("Schedule not available yet — try 'Load from controller' again")
         norm = self._to_norm(sch)
@@ -246,18 +269,15 @@ class RamsesEngine:
         return {"ok": True}
 
     async def pull(self, zone_ids=None) -> dict:
-        """Force ramses to fetch schedules from the controller into the entities."""
+        """Force ramses to fetch schedules from the controller into the entities.
+
+        Retries the RF fetch per zone and spaces zones out to ease RF contention.
+        """
         targets = [self._find(z) for z in (zone_ids or [z["id"] for z in self._zones])]
         results = []
-        for z in targets:
+        for i, z in enumerate(targets):
             try:
-                await self._call("ramses_cc", "get_zone_schedule", {"entity_id": z["entity_id"]})
-                sch = None
-                for _ in range(10):
-                    await asyncio.sleep(1.0)
-                    sch = await self._read_schedule_attr(z["entity_id"])
-                    if sch:
-                        break
+                sch = await self._fetch_rf(z["entity_id"])
                 if sch:
                     self._sched[z["id"]] = self._to_norm(sch)
                     results.append({"zone": z["id"], "status": "ok"})
@@ -265,6 +285,8 @@ class RamsesEngine:
                     results.append({"zone": z["id"], "status": "timeout"})
             except Exception as err:
                 results.append({"zone": z["id"], "status": f"error: {err}"})
+            if i < len(targets) - 1:
+                await asyncio.sleep(2.0)  # spacing between zones eases RF contention
         ok = sum(1 for r in results if r["status"] == "ok")
         return {"ok": ok > 0, "loaded": ok, "total": len(targets), "results": results}
 

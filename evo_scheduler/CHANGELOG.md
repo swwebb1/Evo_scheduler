@@ -1,4 +1,6 @@
 # Changelog
+## 0.6.1
+- Local backend: harden "Load schedules from controller". The RF schedule fetch (ramses_cc.get_zone_schedule) now retries up to 3 times with a short back-off on the transient `error_get_schedule` RF error, and zones are spaced out during a full pull to ease RF contention. Fixes the occasional failure when pulling immediately after a schedule write.
 ## 0.6.0
 - New **local backend**: control Evohome directly through the ramses_cc RF dongle, with no Honeywell cloud (TCC) dependency. Choose it in the add-on **Configuration -> backend: local** (default stays `cloud`). Requires the RAMSES RF integration loaded; the add-on talks to it via Home Assistant (homeassistant_api).
 - Status, boosts/overrides, back-to-schedule, and full schedule read/write all work locally over RF (ramses_cc set_zone_mode / reset_zone_mode / get_zone_schedule / set_zone_schedule). The library, quick boosts and Day off are unchanged and backend-agnostic (zones keyed by the controller's own zone names, so your saved plans just work either way).
