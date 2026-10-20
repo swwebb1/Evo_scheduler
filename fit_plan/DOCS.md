@@ -5,10 +5,11 @@ A personal training plan that lives in the Home Assistant sidebar.
 ## Tabs
 
 - **Today** — what's scheduled for the selected day, with this week's prescription. Kettlebell days list
-  every exercise; tap one to read its description and coaching cues, and tap the numbered circles to tick
+  every exercise; tap one to see an animated demo, its description and coaching cues, and tap the numbered circles to tick
   off sets. *Mark done* records the session. A quick weigh-in (weight and optional waist) sits underneath.
 - **Sessions** — your kettlebell sessions. *Edit* lets you rename a session, change the warm-up, and add,
-  remove, reorder or edit exercises (sets, reps or time, rest, load, notes, description and cues).
+  remove, reorder or edit exercises (sets, reps or time, rest, load, notes, description, cues, a video link and which animation to show).
+  Paste a YouTube link into *Video link* and it plays inside the exercise card.
   *+ New session* creates another (C, D, …) that you can then schedule. The exercise library at the bottom
   holds templates with descriptions that pre-fill new exercises; you can add or edit those too.
 - **Plan** — targets, the weekly schedule (which session or run falls on each day), and the week-by-week

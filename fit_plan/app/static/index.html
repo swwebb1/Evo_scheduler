@@ -89,6 +89,19 @@ svg text{fill:var(--muted);font-size:11px}
 .toast.show{opacity:1}
 .empty{color:var(--muted);text-align:center;padding:20px 8px}
 .libitem{border-top:1px solid var(--line);padding:10px 0}
+.demo{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:0 0 10px;display:flex;justify-content:center}
+.demo-svg{width:100%;max-width:270px;height:auto;display:block}
+.demo-ground{stroke:var(--line);stroke-width:2}
+.demo-limb{stroke:var(--ink);stroke-width:5.5;stroke-linecap:round;stroke-linejoin:round}
+.demo-torso{stroke-width:7}
+.demo-far{stroke:var(--muted);opacity:.45}
+.demo-head{fill:var(--ink)}
+.demo-bell-body{fill:var(--accent)}
+.demo-bell-handle{fill:none;stroke:var(--accent);stroke-width:2.5}
+.vid{margin-top:10px}
+.vid iframe,.vid video,.vid img{width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000;display:block}
+.vid img{aspect-ratio:auto;background:none}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);font:600 14px/1.4 inherit;cursor:pointer;text-decoration:none}
 </style>
 </head>
 <body>
@@ -98,6 +111,7 @@ svg text{fill:var(--muted);font-size:11px}
   <main id="main"><div class="empty">Loading…</div></main>
 </div>
 <div class="toast" id="toast"></div>
+<script src="demos.js"></script>
 <script>
 "use strict";
 /* ---------- helpers ---------- */
@@ -122,7 +136,7 @@ const fmtDay=d=>d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",mont
 const fmtShort=d=>d.toLocaleDateString("en-GB",{day:"numeric",month:"short"});
 
 /* ---------- state ---------- */
-const S={plan:null,log:null,tab:"today",edit:null,libEdit:null,openEx:new Set(),sel:iso(new Date()),
+const S={plan:null,log:null,tab:"today",playing:null,edit:null,libEdit:null,openEx:new Set(),sel:iso(new Date()),
   setsDone:(()=>{try{return JSON.parse(localStorage.getItem("fitplan.sets")||"{}")}catch{return{}}})()};
 function saveSets(){try{localStorage.setItem("fitplan.sets",JSON.stringify(S.setsDone))}catch{}}
 
@@ -149,20 +163,49 @@ function render(){
   m.replaceChildren(...({today:viewToday,sessions:viewSessions,plan:viewPlan,progress:viewProgress}[S.tab])());
 }
 
+/* ---------- video ---------- */
+function ytId(u){const m=String(u).match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/))([\w-]{11})/);return m?m[1]:null}
+function ytStart(u){const m=String(u).match(/[?&](?:t|start)=(\d+)/);return m?m[1]:null}
+function videoBlock(ex,key){
+  const url=(ex.video||"").trim();
+  if(!url){const q=encodeURIComponent("kettlebell "+(ex.name||"")+" form tutorial");
+    return h("div",{class:"vid small"},h("a",{class:"linkbtn",href:"https://www.youtube.com/results?search_query="+q,target:"_blank",rel:"noopener"},"▶ Find a video on YouTube"),
+      h("span",{class:"muted"}," · paste one you like into Edit to show it here"))}
+  const playing=S.playing===key;
+  const id=ytId(url);
+  if(id){if(!playing)return h("div",{class:"vid"},h("button",{class:"linkbtn",onclick:e=>{e.stopPropagation();S.playing=key;render()}},"▶ Play video"));
+    const st=ytStart(url);
+    return h("div",{class:"vid"},h("iframe",{src:"https://www.youtube-nocookie.com/embed/"+id+"?rel=0&playsinline=1&autoplay=1"+(st?"&start="+st:""),
+      allow:"autoplay; encrypted-media; picture-in-picture",allowfullscreen:true,title:ex.name+" video"}))}
+  if(/\.(mp4|webm|mov)(\?|$)/i.test(url))return h("div",{class:"vid"},h("video",{src:url,controls:true,loop:true,muted:true,playsinline:true,preload:"metadata"}));
+  if(/\.(gif|png|jpe?g|webp)(\?|$)/i.test(url))return h("div",{class:"vid"},h("img",{src:url,alt:ex.name+" demonstration",loading:"lazy"}));
+  return h("div",{class:"vid"},h("a",{class:"linkbtn",href:url,target:"_blank",rel:"noopener"},"▶ Open video"));
+}
+function demoSelect(obj){
+  const sel=h("select",null,h("option",{value:""},"Match by exercise name"),
+    (window.FitDemos?FitDemos.names():[]).map(n=>h("option",{value:n},n[0].toUpperCase()+n.slice(1))),h("option",{value:"none"},"No animation"));
+  sel.value=obj.demo||"";sel.onchange=()=>{obj.demo=sel.value;render()};
+  const k=window.FitDemos&&FitDemos.keyFor(obj);
+  return h("div",null,h("label",{class:"f"},"Animation"+(obj.demo?"":k?" (currently: "+k+")":" (no match — pick one)")),sel);
+}
+
 /* ---------- exercise display ---------- */
 function exView(ex,key,withSets){
   const open=S.openEx.has(key);
   const nSets=parseInt(ex.sets,10);
   const box=h("div",{class:"ex"+(open?" open":"")});
-  const head=h("div",{class:"head",onclick:()=>{open?S.openEx.delete(key):S.openEx.add(key);render()}},
+  const head=h("div",{class:"head",onclick:()=>{open?S.openEx.delete(key):S.openEx.add(key);if(S.playing===key)S.playing=null;render()}},
     h("div",null,h("div",{class:"name"},ex.name),
-      h("div",{class:"dose"},[ex.sets&&ex.sets+" × "+ex.reps,ex.rest&&"rest "+ex.rest,ex.load].filter(Boolean).join(" · "))),
+      h("div",{class:"dose"},[ex.sets&&ex.sets+" × "+ex.reps,ex.rest&&(/^rest/i.test(ex.rest)?ex.rest:"rest "+ex.rest),ex.load].filter(Boolean).join(" · "))),
     h("span",{class:"chev"},"▶"));
   box.append(head);
+  const demo=open&&window.FitDemos?FitDemos.create(ex):null;
   const body=h("div",{class:"body"},
+    demo?h("div",{class:"demo"},demo):null,
     ex.description?h("div",null,ex.description):h("div",{class:"muted"},"No description yet — add one in Sessions → Edit."),
     ex.cues&&ex.cues.length?h("ul",null,ex.cues.map(c=>h("li",null,c))):null,
-    ex.notes?h("div",{class:"note"},ex.notes):null);
+    ex.notes?h("div",{class:"note"},ex.notes):null,
+    open?videoBlock(ex,key):null);
   box.append(body);
   if(withSets&&nSets>0&&nSets<=12){const sk=withSets+"|"+ex.id;const got=S.setsDone[sk]||[];
     box.append(h("div",{class:"sets"},Array.from({length:nSets},(_,i)=>h("button",{class:"set"+(got[i]?" on":""),title:"Set "+(i+1),
@@ -208,11 +251,6 @@ function viewToday(){
   out.push(c);
   // quick weigh-in
   out.push(weighCard(ds));
-  // targets
-  const t=S.plan.targets;
-  out.push(h("div",{class:"card"},h("h2",null,"Daily targets"),
-    h("div",{class:"stat"},h("div",null,h("b",null,t.kcal),h("span",null,"kcal")),h("div",null,h("b",null,t.protein_g),h("span",null,"g protein")),
-      h("div",null,h("b",null,t.steps),h("span",null,"steps")))));
   return out;
 }
 
@@ -250,7 +288,8 @@ function viewSessions(){
   S.plan.library.forEach((x,i)=>{const key="l|"+i;const open=S.openEx.has(key);
     lib.append(h("div",{class:"ex"+(open?" open":"")},
       h("div",{class:"head",onclick:()=>{open?S.openEx.delete(key):S.openEx.add(key);render()}},h("div",{class:"name"},x.name),h("span",{class:"chev"},"▶")),
-      h("div",{class:"body"},h("div",null,x.description),x.cues&&x.cues.length?h("ul",null,x.cues.map(c=>h("li",null,c))):null,
+      h("div",{class:"body"},(d=>d?h("div",{class:"demo"},d):null)(open&&window.FitDemos?FitDemos.create(x):null),h("div",null,x.description),x.cues&&x.cues.length?h("ul",null,x.cues.map(c=>h("li",null,c))):null,
+        open?videoBlock(x,key):null,
         h("div",{class:"row",style:"margin-top:8px"},h("button",{class:"btn sm",onclick:()=>{S.libEdit={idx:i,work:clone(x)};render();scrollTo(0,0)}},"Edit")))))});
   out.push(lib);
   return out;
@@ -282,14 +321,15 @@ function viewSessionEditor(){
       h("div",{class:"grid4"},field("Sets",ex,"sets"),field("Reps / time",ex,"reps"),field("Rest",ex,"rest"),field("Load",ex,"load",{ph:"e.g. 16 kg"})),
       field("Notes",ex,"notes",{ph:"Shown highlighted under the description"}),
       field("Description",ex,"description",{area:true}),
-      field("Coaching cues (one per line)",ex,"cues",{area:true,lines:true})));
+      field("Coaching cues (one per line)",ex,"cues",{area:true,lines:true}),
+      h("div",{class:"grid2"},field("Video link (optional)",ex,"video",{ph:"YouTube, .mp4 or .gif URL"}),demoSelect(ex))));
   });
   // add exercise
   const sel=h("select",null,h("option",{value:""},"Blank exercise"),S.plan.library.map((x,i)=>h("option",{value:String(i)},x.name)));
   card.append(h("div",{class:"ed-ex"},h("label",{class:"f"},"Add an exercise"),
     h("div",{class:"row",style:"flex-wrap:nowrap"},sel,h("button",{class:"btn",onclick:()=>{
       const t=sel.value===""?{name:"",description:"",cues:[]}:S.plan.library[+sel.value];
-      w.exercises.push({id:uid(),name:t.name,sets:"3",reps:"10",rest:"60 s",load:"",notes:"",description:t.description,cues:clone(t.cues||[])});render()}},"Add"))));
+      w.exercises.push({id:uid(),name:t.name,sets:"3",reps:"10",rest:"60 s",load:"",notes:"",description:t.description,cues:clone(t.cues||[]),video:t.video||"",demo:t.demo||""});render()}},"Add"))));
   card.append(h("div",{class:"row",style:"margin-top:12px;justify-content:space-between"},
     h("div",{class:"row"},h("button",{class:"btn primary",onclick:async()=>{
         if(!w.name.trim()){toast("Give the session a name");return}
@@ -309,6 +349,7 @@ function viewLibEditor(){
   const e=S.libEdit,w=e.work;
   return [h("div",{class:"card"},h("h2",null,e.idx<0?"New library exercise":"Edit "+w.name),
     field("Name",w,"name"),field("Description",w,"description",{area:true}),field("Coaching cues (one per line)",w,"cues",{area:true,lines:true}),
+    h("div",{class:"grid2"},field("Video link (optional)",w,"video",{ph:"YouTube, .mp4 or .gif URL"}),demoSelect(w)),
     h("div",{class:"muted small",style:"margin-top:6px"},"Changing a library entry doesn't alter exercises already in sessions."),
     h("div",{class:"row",style:"margin-top:12px;justify-content:space-between"},
       h("div",{class:"row"},h("button",{class:"btn primary",onclick:async()=>{if(!w.name.trim()){toast("Name it first");return}
@@ -327,8 +368,7 @@ function viewPlan(){
   const tIn=(label,key,type="text")=>{const el=h("input",{type,step:"0.1",value:t[key]});el.onchange=async()=>{t[key]=type==="number"?parseFloat(el.value):el.value;await savePlan("Saved");render()};return h("div",null,h("label",{class:"f"},label),el)};
   out.push(h("div",{class:"card"},h("h2",null,"Targets"),
     h("div",{class:"grid2"},tIn("Start weight (kg)","start_weight","number"),tIn("Start date","start_date","date"),
-      tIn("Goal weight (kg)","goal_weight","number"),tIn("Planned loss per week (kg)","weekly_loss","number"),
-      tIn("Calories / day","kcal"),tIn("Protein (g) / day","protein_g"),tIn("Steps / day","steps"))));
+      tIn("Goal weight (kg)","goal_weight","number"),tIn("Planned loss per week (kg)","weekly_loss","number"))));
   // schedule
   const sc=h("div",{class:"card"},h("h2",null,"Weekly schedule"),h("div",{class:"muted small"},"Pick what happens each day. Kettlebell days link to a session."));
   const opts=[...p.sessions.map(s=>["session:"+s.id,"Kettlebell: "+s.name]),["run:easy","Easy run"],["run:quality","Quality run"],["ride:ride","Long ride"],["rest:","Rest"]];

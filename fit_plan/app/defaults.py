@@ -167,9 +167,6 @@ TARGETS = {
     "start_date": "2026-10-20",
     "goal_weight": 70.0,
     "weekly_loss": 0.6,
-    "kcal": 2000,
-    "protein_g": "130–150",
-    "steps": "8,000–10,000",
 }
 
 
