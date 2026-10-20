@@ -89,15 +89,27 @@ svg text{fill:var(--muted);font-size:11px}
 .toast.show{opacity:1}
 .empty{color:var(--muted);text-align:center;padding:20px 8px}
 .libitem{border-top:1px solid var(--line);padding:10px 0}
-.demo{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:0 0 10px;display:flex;justify-content:center}
-.demo-svg{width:100%;max-width:270px;height:auto;display:block}
+.demo{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:0 0 10px;padding:6px 8px 8px}
+.demo-wrap{display:flex;flex-direction:column;align-items:center}
+.demo-svg{width:100%;max-width:340px;max-height:260px;height:auto;display:block}
+.demo-cap{min-height:38px;font-size:13px;line-height:1.35;text-align:center;color:var(--ink);font-weight:600;margin-top:2px;max-width:420px}
+.demo-legend{font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:4px;text-align:left}
+.demo-legend-line{display:inline-block;width:22px;border-top:2px dashed var(--accent);flex:none}
 .demo-ground{stroke:var(--line);stroke-width:2}
-.demo-limb{stroke:var(--ink);stroke-width:5.5;stroke-linecap:round;stroke-linejoin:round}
-.demo-torso{stroke-width:7}
-.demo-far{stroke:var(--muted);opacity:.45}
+.demo-limb{stroke:var(--ink);stroke-linecap:round;stroke-linejoin:round;fill:none}
+.demo-leg{stroke-width:9}.demo-arm{stroke-width:7}.demo-foot{stroke-width:6}
+.demo-far{stroke:var(--muted);opacity:.5}
+.demo-torso{stroke:var(--ink);stroke-width:20;stroke-linecap:round}
+.demo-neck{stroke:var(--ink);stroke-width:7;stroke-linecap:round}
 .demo-head{fill:var(--ink)}
+.demo-nose{stroke:var(--ink);stroke-width:3.5;stroke-linecap:round}
 .demo-bell-body{fill:var(--accent)}
 .demo-bell-handle{fill:none;stroke:var(--accent);stroke-width:2.5}
+.demo-dowel{stroke:var(--accent);stroke-width:2;stroke-dasharray:5 4}
+.demo-note{fill:var(--muted);font-size:9px}
+.src{margin-top:8px;font-size:12.5px;color:var(--muted)}
+.src a{color:var(--accent);text-decoration:none}
+.src a:hover{text-decoration:underline}
 .vid{margin-top:10px}
 .vid iframe,.vid video,.vid img{width:100%;aspect-ratio:16/9;border:0;border-radius:10px;background:#000;display:block}
 .vid img{aspect-ratio:auto;background:none}
@@ -181,6 +193,13 @@ function videoBlock(ex,key){
   if(/\.(gif|png|jpe?g|webp)(\?|$)/i.test(url))return h("div",{class:"vid"},h("img",{src:url,alt:ex.name+" demonstration",loading:"lazy"}));
   return h("div",{class:"vid"},h("a",{class:"linkbtn",href:url,target:"_blank",rel:"noopener"},"▶ Open video"));
 }
+function sourceLine(ex){
+  const list=Array.isArray(ex.source)?ex.source.filter(x=>x&&x.url):[];
+  if(!list.length)return null;
+  const kids=["Technique source"+(list.length>1?"s":"")+": "];
+  list.forEach((x,i)=>{if(i)kids.push(" · ");kids.push(h("a",{href:x.url,target:"_blank",rel:"noopener"},x.label||x.url))});
+  return h("div",{class:"src"},kids);
+}
 function demoSelect(obj){
   const sel=h("select",null,h("option",{value:""},"Match by exercise name"),
     (window.FitDemos?FitDemos.names():[]).map(n=>h("option",{value:n},n[0].toUpperCase()+n.slice(1))),h("option",{value:"none"},"No animation"));
@@ -205,7 +224,8 @@ function exView(ex,key,withSets){
     ex.description?h("div",null,ex.description):h("div",{class:"muted"},"No description yet — add one in Sessions → Edit."),
     ex.cues&&ex.cues.length?h("ul",null,ex.cues.map(c=>h("li",null,c))):null,
     ex.notes?h("div",{class:"note"},ex.notes):null,
-    open?videoBlock(ex,key):null);
+    open?videoBlock(ex,key):null,
+    open?sourceLine(ex):null);
   box.append(body);
   if(withSets&&nSets>0&&nSets<=12){const sk=withSets+"|"+ex.id;const got=S.setsDone[sk]||[];
     box.append(h("div",{class:"sets"},Array.from({length:nSets},(_,i)=>h("button",{class:"set"+(got[i]?" on":""),title:"Set "+(i+1),
@@ -289,7 +309,7 @@ function viewSessions(){
     lib.append(h("div",{class:"ex"+(open?" open":"")},
       h("div",{class:"head",onclick:()=>{open?S.openEx.delete(key):S.openEx.add(key);render()}},h("div",{class:"name"},x.name),h("span",{class:"chev"},"▶")),
       h("div",{class:"body"},(d=>d?h("div",{class:"demo"},d):null)(open&&window.FitDemos?FitDemos.create(x):null),h("div",null,x.description),x.cues&&x.cues.length?h("ul",null,x.cues.map(c=>h("li",null,c))):null,
-        open?videoBlock(x,key):null,
+        open?videoBlock(x,key):null,open?sourceLine(x):null,
         h("div",{class:"row",style:"margin-top:8px"},h("button",{class:"btn sm",onclick:()=>{S.libEdit={idx:i,work:clone(x)};render();scrollTo(0,0)}},"Edit")))))});
   out.push(lib);
   return out;
@@ -329,7 +349,7 @@ function viewSessionEditor(){
   card.append(h("div",{class:"ed-ex"},h("label",{class:"f"},"Add an exercise"),
     h("div",{class:"row",style:"flex-wrap:nowrap"},sel,h("button",{class:"btn",onclick:()=>{
       const t=sel.value===""?{name:"",description:"",cues:[]}:S.plan.library[+sel.value];
-      w.exercises.push({id:uid(),name:t.name,sets:"3",reps:"10",rest:"60 s",load:"",notes:"",description:t.description,cues:clone(t.cues||[]),video:t.video||"",demo:t.demo||""});render()}},"Add"))));
+      w.exercises.push({id:uid(),name:t.name,sets:"3",reps:"10",rest:"60 s",load:"",notes:"",description:t.description,cues:clone(t.cues||[]),video:t.video||"",demo:t.demo||"",source:clone(t.source||[])});render()}},"Add"))));
   card.append(h("div",{class:"row",style:"margin-top:12px;justify-content:space-between"},
     h("div",{class:"row"},h("button",{class:"btn primary",onclick:async()=>{
         if(!w.name.trim()){toast("Give the session a name");return}

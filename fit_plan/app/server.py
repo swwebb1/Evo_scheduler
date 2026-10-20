@@ -16,6 +16,7 @@ from fastapi import Body, FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 
 from defaults import default_log, default_plan
+from migrate import migrate
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 _LOGGER = logging.getLogger("fitplan")
@@ -51,7 +52,13 @@ app = FastAPI(title="Fit Plan")
 
 @app.get("/api/plan")
 def get_plan():
-    return _read(PLAN, default_plan)
+    plan = _read(PLAN, default_plan)
+    if migrate(plan):
+        if PLAN.is_file():
+            _write(PLAN.with_suffix(".v1-backup.json"), json.loads(PLAN.read_text()))
+        _write(PLAN, plan)
+        _LOGGER.info("Plan upgraded to version %s", plan["version"])
+    return plan
 
 
 @app.put("/api/plan")

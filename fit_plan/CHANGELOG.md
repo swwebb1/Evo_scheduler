@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.0
+- Technique review against published sources (ACE, NSCA, NASM, StrongFirst, McGill Big 3, physio sheets);
+  descriptions and cues rewritten, with source links on every exercise.
+- New animated figure: adult proportions, solid torso showing the line of the back, head direction,
+  feet and knees; a dashed "flat back" guide on hinge moves; a coaching caption for each phase.
+- Fixed unsafe-looking poses: swing no longer leans back at the top; deadlift bell sits over mid-foot
+  with shins near vertical; RDL keeps the bell close to the legs; dead bug arm no longer sweeps
+  through the floor.
+- Session A: suitcase carry replaced by side plank. Library: Russian twist replaced by bird dog.
+- Your saved plan is upgraded automatically; any exercise text you edited yourself is left alone and
+  the previous plan is backed up.
+
 ## 0.2.0
 - Animated demo for every kettlebell exercise (open an exercise to see it loop).
 - Optional video link per exercise: YouTube links embed in the card; .mp4/.gif links play inline.

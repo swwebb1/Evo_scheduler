@@ -1,113 +1,179 @@
-"""Default plan content: Steve's 6-week plan (Oct–Nov 2026) and the exercise library."""
+"""Default plan content: Steve's 6-week plan (Oct–Nov 2026) and the exercise library.
+
+Exercise descriptions and cues were checked against published technique guidance (October 2026):
+ACE Exercise Library, NSCA (Kinetic Select / Exercise Technique Manual), NASM, StrongFirst,
+Stuart McGill's "Big 3" for back health, and university / physio exercise sheets. Each exercise
+carries its source links so they can be opened from the app.
+"""
+import copy
+
+SRC = {
+    "ace_kb": {"label": "ACE: getting started with kettlebells", "url": "https://www.acefitness.org/education-and-resources/professional/expert-articles/5269/how-to-get-started-with-kettlebells"},
+    "ace_swing": {"label": "ACE: kettlebell swing", "url": "https://www.acefitness.org/acefit/exercise-library-details/0/391/"},
+    "nsca_swing": {"label": "NSCA: two-arm kettlebell swing", "url": "https://www.nsca.com/education/articles/kinetic-select/two-arm-kettlebell-swing/"},
+    "sf_swing": {"label": "StrongFirst: don't lean back at the top", "url": "https://www.strongfirst.com/?p=67216"},
+    "nasm_dl": {"label": "NASM: kettlebell deadlift", "url": "https://www.nasm.org/resource-center/exercise-library/kettlebell-deadlift"},
+    "nsca_rdl": {"label": "NSCA: Romanian deadlift", "url": "https://www.nsca.com/education/articles/kinetic-select/romanian-deadlift-rdl/"},
+    "nsca_press": {"label": "NSCA: one-arm kettlebell press", "url": "https://us.humankinetics.com/blogs/excerpt/one-arm-kettlebell-press"},
+    "ace_clean": {"label": "ACE: clean and press", "url": "https://www.acefitness.org/resources/everyone/exercise-library/383/clean-and-press/"},
+    "nsca_tgu": {"label": "NSCA: Turkish get-up", "url": "https://www.nsca.com/education/articles/kinetic-select/turkish-get-up"},
+    "nuffield_tgu": {"label": "Nuffield Health: Turkish get-up", "url": "https://www.nuffieldhealth.com/article/how-to-kettlebell-turkish-get-up"},
+    "ace_sideplank": {"label": "ACE: side plank (modified)", "url": "https://www.acefitness.org/resources/everyone/exercise-library/100/side-plank-modified"},
+    "mcgill": {"label": "McGill Big 3 for back health", "url": "https://www.ptprogress.com/big-3-exercises-for-back-pain/"},
+    "nasm_birddog": {"label": "NASM: bird dog", "url": "https://www.nasm.org/exercise-library/bird-dog"},
+    "ace_plank": {"label": "ACE: front plank", "url": "https://acefitness.org/resources/everyone/exercise-library/32/front-plank/"},
+    "ace_halo": {"label": "ACE: halo", "url": "https://www.acefitness.org/education-and-resources/lifestyle/exercise-library/394/halo"},
+    "catalyst_pushup": {"label": "Catalyst Athletics: push-up", "url": "https://catalystathletics.com/exercise/869/Push-Up/"},
+    "ace_lunge": {"label": "ACE: reverse lunge", "url": "https://acefitness.org/resources/everyone/exercise-library/319/reverse-lunge"},
+    "ace_row": {"label": "ACE: bent-over row", "url": "https://www.acefitness.org/resources/everyone/exercise-library/12/bent-over-row/"},
+    "physitrack_press": {"label": "Physitrack: floor press", "url": "https://au.physitrack.com/home-exercise-video/floor-press"},
+    "sussex_deadbug": {"label": "Univ. of Sussex Sport: dead bug", "url": "https://www.sussex.ac.uk/sport/documents/dead-bug.pdf"},
+    "motra_hp": {"label": "Motra: kettlebell high pull", "url": "https://motra.com/exercises/kettlebellHighPull"},
+    "nfpt_carry": {"label": "NFPT: suitcase carry", "url": "https://nfpt.com/suitcase-carries-how-to-do/"},
+}
+
+
+def _s(*keys):
+    return [dict(SRC[k]) for k in keys]
+
 
 LIBRARY = [
     {
         "name": "Goblet squat",
-        "description": "Hold the bell by the horns at chest height, elbows tucked. Sit down between your heels until the hip crease drops below the knee, then drive back up through the whole foot.",
-        "cues": ["Feet shoulder-width, toes slightly out", "Chest tall, bell stays glued to the chest", "Knees track over toes", "Exhale as you stand"],
+        "description": "Hold the bell by the horns at chest height, feet about shoulder-width, toes slightly out. Push the hips back and bend the knees to sit down between your heels with your chest up and back straight, then drive up through the whole foot to stand.",
+        "cues": ["Elbows forward, inside the knees", "Heels stay down — weight through the heels and mid-foot", "Knees track in line with the toes", "Only go as deep as you can keep your back flat (no tailbone tuck)", "Eyes forward, neck in line"],
+        "source": _s("ace_kb"),
     },
     {
         "name": "Single-arm row",
-        "description": "Hinge forward with a flat back, one hand braced on a knee or chair. Pull the bell from a dead hang up to your hip, squeezing the shoulder blade back, then lower under control.",
-        "cues": ["Pull to the hip, not the chest", "Don't twist the torso", "Pause 1 s at the top", "Long neck, eyes down"],
+        "description": "Take a split stance and brace the free hand on your front thigh (or a chair). Hinge forward with a flat back and let the bell hang from a straight arm. Pull the elbow back towards your hip, pause, then lower under control.",
+        "cues": ["Back flat, neck long — look at the floor just ahead", "Pull the elbow to the hip, not the hand to the chest", "No twisting through the torso", "Pause 1 s at the top, lower slowly"],
+        "source": _s("ace_row"),
     },
     {
         "name": "Kettlebell deadlift",
-        "description": "Bell between the feet. Push the hips back with soft knees, grip the handle, brace, and stand tall by driving the hips forward. Lower by hinging, not squatting.",
-        "cues": ["Hips back, shins near vertical", "Flat back throughout", "Squeeze glutes at the top, don't lean back", "Bell travels in a straight line"],
+        "description": "Bell on the floor between your feet, in line with the middle of the foot. Push the hips back with a slight knee bend and near-vertical shins, and grip the handle with a flat back. Brace, push the floor away and drive the hips forward to stand tall. Lower by hinging back the same way.",
+        "cues": ["Chest up, back flat — never round the lower back", "Shoulders slightly ahead of the bell, arms long", "Weight through the heels and mid-foot, not the toes", "Finish by squeezing the glutes — don't lean back", "Neck in line with your back"],
+        "source": _s("nasm_dl", "ace_kb"),
     },
     {
         "name": "Push-up",
-        "description": "Hands slightly wider than shoulders, body in one straight line from head to heels. Lower until the chest is a fist from the floor, then press away. Raise the hands on a bench or the bell handles to make it easier.",
-        "cues": ["Squeeze glutes and brace abs", "Elbows about 45° from the body", "Full range every rep", "Stop the set when form breaks"],
+        "description": "Hands on the floor under the shoulders, body in one straight line from heels to head. Lower under control until your chest is close to the floor, then press back up to straight arms. Put your hands on a bench or step to make it easier.",
+        "cues": ["Glutes and abs tight — hips don't sag or pike", "Elbows about 45° from your sides", "Head in line, eyes just ahead of the hands", "Stop the set when the straight line breaks"],
+        "source": _s("catalyst_pushup"),
     },
     {
-        "name": "Suitcase carry",
-        "description": "Hold a heavy bell in one hand by your side and walk tall without leaning towards it. Indoors, march slowly on the spot instead. Excellent for the obliques and deep core.",
-        "cues": ["Stand perfectly upright", "Shoulder pulled down and back", "Short, controlled steps", "Breathe behind the brace"],
+        "name": "Side plank",
+        "description": "Lie on your side with the elbow directly under the shoulder and feet stacked. Brace and lift the hips until your body is straight from feet to head, hold, then lower. To make it easier, bend the knees and lift from the knees. It trains the side of the trunk like a suitcase carry, with very low load on the spine.",
+        "cues": ["Elbow directly under the shoulder", "Straight line from feet (or knees) to head", "Head in line with the spine", "Keep breathing — don't hold your breath", "Short holds done well beat long sagging ones"],
+        "source": _s("ace_sideplank", "mcgill"),
     },
     {
         "name": "Plank",
-        "description": "Forearms under shoulders, body in a straight line. Actively pull the elbows towards the toes and squeeze the glutes to make it harder.",
-        "cues": ["No sagging hips", "Ribs down, glutes tight", "Breathe steadily", "Quality over duration"],
+        "description": "Forearms on the floor with elbows directly under the shoulders. Brace, lift the body so it forms one stiff line from heels to head, and hold while breathing.",
+        "cues": ["Shoulders over elbows, no shrugging", "No sagging low back or hiked hips", "Legs straight, toes tucked", "Stop if you feel low-back pain"],
+        "source": _s("ace_plank"),
     },
     {
         "name": "Two-hand swing",
-        "description": "A hip hinge done explosively. Hike the bell back between the legs, then snap the hips forward so the bell floats to chest height. The arms are ropes; the power comes from the hips. Let it fall back into the hinge.",
-        "cues": ["Hinge, don't squat", "Snap hips and squeeze glutes at the top", "Bell no higher than the chest", "Forceful exhale at the top", "Keep the bell close on the backswing (above the knees)"],
+        "description": "A hip hinge, not a squat. Hike the bell back high between the thighs with a flat back and near-vertical shins, then snap the hips forward so the bell floats to chest height — the arms only guide it. Let it fall and hinge again as your forearms meet your hips.",
+        "cues": ["Flat back and long neck at the bottom", "Bell passes above the knees on the backswing", "Power from the hips and legs, not the shoulders", "Top: stand tall like a plank — glutes tight, no leaning back", "Knees stay soft and mostly still"],
+        "source": _s("ace_swing", "nsca_swing", "sf_swing"),
     },
     {
         "name": "Reverse lunge (goblet)",
-        "description": "Hold the bell in the goblet position. Step one foot back and lower the back knee towards the floor, then drive through the front heel to return. Alternate legs or do all reps one side.",
-        "cues": ["Long step back", "Front knee over mid-foot", "Torso upright", "Back knee kisses the floor softly"],
+        "description": "Hold the bell at the chest, feet hip-width. Step one foot back and lower the back knee towards the floor, sitting back into the front hip with your chest up. Drive through the front foot to return.",
+        "cues": ["Chest up, shoulders back", "Front knee stays over the middle of the foot", "Lower straight down, under control", "Back knee lightly touches or hovers above the floor"],
+        "source": _s("ace_lunge", "ace_kb"),
     },
     {
         "name": "Floor press",
-        "description": "Lie on your back, knees bent, bell in one hand with the upper arm on the floor. Press straight up until the arm locks, then lower until the elbow touches the floor again.",
-        "cues": ["Wrist straight, bell on the forearm", "Elbow about 45° from the body", "Pause briefly with the elbow down", "Other arm can brace on the floor"],
+        "description": "Lie on your back with knees bent and feet flat. Start with the upper arm on the floor, about 45° from your side, the bell resting on the back of the forearm and the wrist straight. Press straight up over the shoulder, then lower slowly until the elbow touches the floor.",
+        "cues": ["Wrist straight, knuckles to the ceiling", "Elbow in line with or slightly below the shoulder", "Press over the shoulder, not over the face", "Pause with the elbow down — no bouncing"],
+        "source": _s("physitrack_press"),
     },
     {
         "name": "Single-arm overhead press",
-        "description": "Start with the bell in the rack position (resting on the forearm at the shoulder). Brace, squeeze the glutes and press straight up until the bicep is by the ear. Lower back to the rack.",
-        "cues": ["Squeeze the handle hard", "Glutes and abs tight, no leaning back", "Fist finishes over the shoulder", "Lower slowly"],
+        "description": "Start in the rack: bell resting on the forearm, elbow tucked to the ribs, wrist straight. Brace, squeeze the glutes and press straight up until the elbow is fully straight with the bicep by the ear. Lower slowly back to the rack.",
+        "cues": ["Neutral spine — no leaning back or to the side", "Free arm by your side, eyes forward", "Lower slowly; don't let the torso fold forward", "If you can't reach vertical without arching, go lighter or press half-kneeling"],
+        "source": _s("nsca_press", "ace_clean"),
     },
     {
         "name": "Dead bug",
-        "description": "Lie on your back, arms up to the ceiling and knees bent at 90° over the hips. Slowly lower the opposite arm and leg towards the floor while pressing the lower back into the mat, then return.",
-        "cues": ["Lower back stays flat on the floor", "Move slowly, exhale as you extend", "Only go as low as you can control", "Hold a light bell overhead to progress"],
+        "description": "Lie on your back, arms straight up above the shoulders, hips and knees at 90°. Brace with your lower back neutral — not arching. Slowly lower one arm overhead and straighten the opposite leg until it's just above the floor, return, then switch sides.",
+        "cues": ["Back stays neutral — stop the range before it arches", "Move slowly; breathe out as you extend", "Don't let the hips hike or the shoulders lift", "Keep the knee bent more to make it easier"],
+        "source": _s("sussex_deadbug"),
+    },
+    {
+        "name": "Bird dog",
+        "description": "Hands under the shoulders, knees under the hips, spine neutral. Brace, then reach one arm forward and the opposite leg back until they're in line with your body. Hold 8–10 s, return and switch sides.",
+        "cues": ["No arching or sagging of the back", "Hips stay level — don't rotate", "Head in line, don't let it drop", "Reach long rather than high"],
+        "source": _s("nasm_birddog", "mcgill"),
     },
     {
         "name": "Swing + push-up finisher",
-        "description": "Alternate 10 two-hand swings with 5 push-ups, back to back, as one round. Rest as needed between rounds but keep the form sharp.",
-        "cues": ["Swing form first, speed second", "Put the bell down safely before push-ups", "Steady breathing", "Stop if the hinge turns into a squat"],
+        "description": "One round is 10 two-hand swings, then park the bell and do 5 push-ups. Rest as needed between rounds. Swing form first, speed second.",
+        "cues": ["All the swing cues: flat back, hips do the work, no leaning back", "Hinge with a flat back to park the bell before the push-ups", "Straight line heels to head in the push-ups", "Stop if the hinge turns into a squat or your back rounds"],
+        "source": _s("ace_swing", "catalyst_pushup"),
     },
     {
         "name": "Halo",
-        "description": "Hold the bell upside down by the horns at chest height and circle it slowly around your head, close to the skull. Change direction each rep. Great warm-up for the shoulders.",
-        "cues": ["Light bell", "Ribs down, glutes tight", "Keep it close to the head", "Slow and smooth"],
+        "description": "Hold the bell upside down by the horns in front of the chest. Circle it slowly around your head, close to the skull, and back to the chest. Change direction each rep. A shoulder warm-up — use a light bell.",
+        "cues": ["Light bell", "Back straight, ribs down, glutes tight", "Keep the head still", "Elbows close, slow and smooth"],
+        "source": _s("ace_halo"),
     },
     {
         "name": "Kettlebell clean",
-        "description": "From a hinge, swing the bell back then drive the hips to bring it up close to the body into the rack position, guiding it around the hand rather than letting it flip over and bang the forearm.",
-        "cues": ["Zip up the jacket — bell stays close", "Hand punches through at the top", "Soft landing in the rack", "Hips do the work"],
+        "description": "From the hike, drive the hips forward and, as the bell rises, pull the elbow back towards the ribs so the bell travels close to the body and settles softly in the rack at the shoulder. Let it drop back between the legs to repeat.",
+        "cues": ["Flat back on the hike", "Elbow stays close to the body", "Guide the bell around the hand — don't let it flip and bang the forearm", "Rack: elbow on the ribs, wrist straight"],
+        "source": _s("ace_clean"),
     },
     {
         "name": "Turkish get-up",
-        "description": "From lying with the bell pressed overhead, move step by step to standing while keeping the arm locked and eyes on the bell, then reverse back down. Slow, technical, full-body.",
-        "cues": ["Eyes on the bell", "Arm locked throughout", "Pause at each step", "Learn it with a shoe on the fist first"],
+        "description": "Advanced — practise the steps with a shoe balanced on your fist before using a bell. Lying with the bell pressed up and the same-side knee bent: roll to the opposite elbow, then hand, lift the hips, sweep the straight leg back to a half-kneel, lift the torso and stand. Reverse every step to lie back down.",
+        "cues": ["Arm locked and vertical throughout", "Eyes on the bell until you're standing", "Move slowly, pausing at each position", "Lower the bell under control — never drop it"],
+        "source": _s("nsca_tgu", "nuffield_tgu"),
     },
     {
         "name": "Single-arm swing",
-        "description": "As the two-hand swing but with one hand. Resist the rotation and keep the free arm by your side or following the bell.",
-        "cues": ["Square shoulders, don't twist", "Same hip snap", "Start lighter than the two-hand swing", "Equal reps each side"],
+        "description": "As the two-hand swing, but with one hand. Keep the grip arm straight and strong through the arc and resist the twist so your shoulders stay square.",
+        "cues": ["Start lighter than your two-hand swing", "Turn the thumb toward the glutes on the backswing", "Same hip snap, same standing plank at the top", "Equal reps each side"],
+        "source": _s("ace_kb", "sf_swing"),
     },
     {
         "name": "Romanian deadlift",
-        "description": "Hold the bell (or two) in front of the thighs. Push the hips back, sliding the bell down the legs to just below the knees while keeping a flat back, then drive the hips forward to stand.",
-        "cues": ["Soft knees, not bending more", "Feel the hamstrings stretch", "Bell slides close to the legs", "Squeeze glutes at the top"],
-    },
-    {
-        "name": "Russian twist",
-        "description": "Sit with knees bent, lean back slightly with a straight back and hold the bell at the chest. Rotate the torso side to side, moving the bell across the body.",
-        "cues": ["Rotate from the ribs, not just the arms", "Back straight", "Feet down to make it easier", "Control, don't flail"],
+        "description": "Stand tall holding the bell in front of the thighs, knees slightly bent. Keeping that knee bend, push the hips back so the bell slides down close to the legs to just below the knees — or until you can't keep a neutral spine — then drive the hips forward to stand.",
+        "cues": ["Knees stay slightly bent throughout", "Bell stays close to the legs", "Shoulders over or just in front of the bell", "Stop before your back starts to round", "Squeeze the glutes at the top"],
+        "source": _s("nsca_rdl"),
     },
     {
         "name": "Thruster",
-        "description": "From the goblet or rack position, squat down, then drive up and use that momentum to press the bell overhead in one smooth movement.",
-        "cues": ["Full squat depth", "Drive through the heels", "Press as you stand", "Lower bell to the chest as you descend"],
+        "description": "Squat with the bell in the rack, then drive up and use that momentum to press it overhead in one smooth movement. Bring it back to the rack as you sink into the next squat.",
+        "cues": ["Chest up, heels down in the squat", "Press finishes with the bicep by the ear", "Stand tall at the top — no leaning back", "Use a lighter bell than for a strict press"],
+        "source": _s("ace_kb", "nsca_press"),
     },
     {
         "name": "High pull",
-        "description": "Like a single-arm swing, but at the top pull the elbow back and high so the bell finishes beside the chest, then push it back into the swing.",
-        "cues": ["Hips start it, arm finishes", "Elbow high and back", "Bell stays close", "Smooth rhythm"],
+        "description": "From the hike, drive the hips forward. As the bell reaches chest height, pull the elbow up and out to shoulder level, keeping the bell close and the wrist straight, then guide it back down into the swing.",
+        "cues": ["Neutral spine always", "Hips first, then the arm", "Elbow finishes above the wrist", "Keep the bell close to the body"],
+        "source": _s("motra_hp"),
+    },
+    {
+        "name": "Suitcase carry",
+        "description": "Hinge with a flat back to pick the bell up. Hold it at your side, slightly away from the body, and walk — or march slowly on the spot — standing tall, without leaning toward the bell or shrugging. Switch hands halfway.",
+        "cues": ["Pick it up with a hinge — don't round your back", "Shoulders down and level", "Don't lean toward the weight", "Slow, controlled steps"],
+        "source": _s("nfpt_carry"),
     },
 ]
 
+LIB = {x["name"]: x for x in LIBRARY}
+
 
 def _ex(eid, name, sets, reps, rest, load="", notes=""):
-    lib = next(x for x in LIBRARY if x["name"] == name)
+    lib = LIB[name]
     return {"id": eid, "name": name, "sets": sets, "reps": reps, "rest": rest, "load": load,
-            "notes": notes, "description": lib["description"], "cues": list(lib["cues"])}
+            "notes": notes, "description": lib["description"], "cues": list(lib["cues"]),
+            "source": copy.deepcopy(lib["source"])}
 
 
 SESSIONS = [
@@ -121,7 +187,7 @@ SESSIONS = [
             _ex("a2", "Single-arm row", "3", "10–12 each side", "60 s"),
             _ex("a3", "Kettlebell deadlift", "4", "10–12", "90 s"),
             _ex("a4", "Push-up", "3", "8–15", "60 s", notes="Hands raised if needed"),
-            _ex("a5", "Suitcase carry", "3", "40 s each side", "45 s", notes="Or march on the spot"),
+            _ex("a5", "Side plank", "3", "20–30 s each side", "30 s", notes="Bend the knees to make it easier"),
             _ex("a6", "Plank", "3", "30–45 s", "30 s"),
         ],
     },
@@ -169,11 +235,12 @@ TARGETS = {
     "weekly_loss": 0.6,
 }
 
+PLAN_VERSION = 2
+
 
 def default_plan() -> dict:
-    import copy
     return copy.deepcopy({
-        "version": 1,
+        "version": PLAN_VERSION,
         "targets": TARGETS,
         "schedule": SCHEDULE,
         "sessions": SESSIONS,
