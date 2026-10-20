@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fit Plan</title>
+<style>
+:root{
+  --bg:#f4f5f2;--card:#ffffff;--ink:#1b1f1d;--muted:#66706b;--line:#e1e4df;
+  --accent:#2f7d5b;--accent-ink:#ffffff;--accent-soft:#e3f1ea;--warn:#b5482f;--warn-soft:#f8e6e1;
+  --run:#2b6cb0;--ride:#8a5a14;--rest:#7a7f7c;--chip:#eef0ec;
+  --radius:14px;--shadow:0 1px 2px rgba(0,0,0,.05),0 2px 10px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#121514;--card:#1b1f1d;--ink:#e8ece9;--muted:#98a29d;--line:#2b312e;
+  --accent:#4fb487;--accent-ink:#0d1a14;--accent-soft:#1d3329;--warn:#e07a62;--warn-soft:#3a221c;
+  --run:#6aa5e8;--ride:#d6a157;--rest:#8e9692;--chip:#252a28;--shadow:none;
+}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+.wrap{max-width:760px;margin:0 auto;padding:12px 14px 96px}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:6px 2px 12px}
+header h1{font-size:22px;margin:0;letter-spacing:-.01em}
+header .sub{color:var(--muted);font-size:14px}
+nav{position:sticky;top:0;z-index:5;background:var(--bg);padding:4px 0 10px}
+.tabs{display:flex;background:var(--chip);border-radius:12px;padding:3px;gap:3px}
+.tabs button{flex:1;border:0;background:transparent;color:var(--muted);font:600 14px/1 inherit;padding:10px 4px;border-radius:9px;cursor:pointer}
+.tabs button.on{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin:0 0 12px;box-shadow:var(--shadow)}
+.card h2{font-size:17px;margin:0 0 2px}
+.card h3{font-size:14px;margin:14px 0 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.spread{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:3px 8px;border-radius:99px;background:var(--chip);color:var(--muted)}
+.tag.session{background:var(--accent-soft);color:var(--accent)}
+.tag.run{color:var(--run)} .tag.ride{color:var(--ride)} .tag.rest{color:var(--rest)}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);font:600 14px/1 inherit;padding:10px 14px;border-radius:10px;cursor:pointer;min-height:40px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--warn);border-color:var(--warn-soft)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.sm{padding:6px 10px;min-height:32px;font-size:13px}
+.btn:disabled{opacity:.45;cursor:default}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 10px;width:100%;min-height:40px}
+textarea{min-height:76px;resize:vertical}
+label.f{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:8px 0 3px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media (max-width:520px){.grid4{grid-template-columns:1fr 1fr}}
+/* exercises */
+.ex{border-top:1px solid var(--line);padding:10px 0}
+.ex:first-of-type{border-top:0}
+.ex .head{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.ex .name{font-weight:600}
+.ex .dose{color:var(--muted);font-size:13px}
+.ex .chev{margin-left:auto;color:var(--muted);transition:transform .15s;font-size:13px;padding-top:2px}
+.ex.open .chev{transform:rotate(90deg)}
+.ex .body{display:none;margin:8px 0 2px 0;padding:10px 12px;background:var(--bg);border-radius:10px;font-size:14px}
+.ex.open .body{display:block}
+.ex .body ul{margin:6px 0 0;padding-left:18px}
+.ex .body li{margin:2px 0}
+.ex .note{font-size:13px;color:var(--accent);margin-top:6px}
+.sets{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.set{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--line);background:var(--card);color:var(--muted);font:600 13px/1 inherit;cursor:pointer}
+.set.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+/* week strip */
+.strip{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:6px}
+.day{background:var(--bg);border-radius:10px;padding:8px 2px;text-align:center;font-size:12px;border:1.5px solid transparent;cursor:pointer}
+.day.today{border-color:var(--accent)}
+.day .d{font-weight:700;font-size:13px}
+.day .k{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px}
+.day .tick{color:var(--accent);font-weight:700;height:16px}
+/* editor */
+.ed-ex{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:10px 0;background:var(--bg)}
+.ed-ex .tools{display:flex;gap:4px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:600}
+td input{min-height:34px;padding:6px 8px;font-size:14px}
+.tablewrap{overflow-x:auto;margin:0 -4px}
+.num{font-variant-numeric:tabular-nums}
+.good{color:var(--accent)} .bad{color:var(--warn)}
+.stat{display:flex;gap:18px;flex-wrap:wrap;margin:8px 0 2px}
+.stat div b{display:block;font-size:22px;letter-spacing:-.01em}
+.stat div span{font-size:12px;color:var(--muted)}
+svg text{fill:var(--muted);font-size:11px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
+.toast.show{opacity:1}
+.empty{color:var(--muted);text-align:center;padding:20px 8px}
+.libitem{border-top:1px solid var(--line);padding:10px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>Fit Plan</h1><span class="sub" id="hdr"></span></header>
+  <nav><div class="tabs" id="tabs"></div></nav>
+  <main id="main"><div class="empty">Loading…</div></main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+"use strict";
+/* ---------- helpers ---------- */
+const api = p => "api/" + p;           // relative: works behind HA ingress
+async function jget(p){const r=await fetch(api(p));if(!r.ok)throw new Error(await r.text()||r.status);return r.json()}
+async function jsend(p,m,b){const r=await fetch(api(p),{method:m,headers:{"Content-Type":"application/json"},body:b===undefined?undefined:JSON.stringify(b)});
+  if(!r.ok){let e=r.status;try{e=(await r.json()).detail||e}catch{}throw new Error(e)}return r.json()}
+function h(tag,attrs,...kids){const e=document.createElement(tag);
+  if(attrs)for(const[k,v]of Object.entries(attrs)){if(v==null||v===false)continue;
+    if(k==="class")e.className=v;else if(k.startsWith("on"))e[k]=v;else if(k==="value")e.value=v;else e.setAttribute(k,v===true?"":v)}
+  for(const k of kids.flat()){if(k==null||k===false)continue;e.append(k instanceof Node?k:document.createTextNode(String(k)))}return e}
+const clone=o=>JSON.parse(JSON.stringify(o));
+const uid=()=>Math.random().toString(36).slice(2,9);
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),1800)}
+const DAYS=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function parseISO(s){const[y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
+function dow(d){return DAYS[(d.getDay()+6)%7]}
+function mondayOf(d){return addDays(d,-((d.getDay()+6)%7))}
+const fmtDay=d=>d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"});
+const fmtShort=d=>d.toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+
+/* ---------- state ---------- */
+const S={plan:null,log:null,tab:"today",edit:null,libEdit:null,openEx:new Set(),sel:iso(new Date()),
+  setsDone:(()=>{try{return JSON.parse(localStorage.getItem("fitplan.sets")||"{}")}catch{return{}}})()};
+function saveSets(){try{localStorage.setItem("fitplan.sets",JSON.stringify(S.setsDone))}catch{}}
+
+async function savePlan(msg){S.plan=await jsend("plan","PUT",S.plan);if(msg)toast(msg)}
+async function saveLog(msg){S.log=await jsend("log","PUT",S.log);if(msg)toast(msg)}
+
+function weekFor(date){const ws=S.plan.weeks.slice().sort((a,b)=>a.start<b.start?-1:1);let cur=null;
+  for(const w of ws){if(parseISO(w.start)<=date)cur=w}return cur}
+function targetFor(date){const t=S.plan.targets;const days=(date-parseISO(t.start_date))/864e5;
+  return Math.max(Number(t.goal_weight),Number(t.start_weight)-Number(t.weekly_loss)*days/7)}
+function sessionById(id){return S.plan.sessions.find(s=>s.id===id)}
+function doneOn(dateStr){return S.log.done.filter(d=>d.date===dateStr)}
+function prescription(item,week){if(!week)return"";
+  if(item.kind==="run")return item.ref==="quality"?week.quality:week.easy;
+  if(item.kind==="ride")return week.ride;if(item.kind==="session")return week.kb;return""}
+
+/* ---------- render shell ---------- */
+const TABS=[["today","Today"],["sessions","Sessions"],["plan","Plan"],["progress","Progress"]];
+function render(){
+  const tabs=document.getElementById("tabs");tabs.replaceChildren(...TABS.map(([k,l])=>h("button",{class:S.tab===k?"on":"",onclick:()=>{S.tab=k;S.edit=null;S.libEdit=null;render();scrollTo(0,0)}},l)));
+  const now=new Date(),w=weekFor(now);
+  document.getElementById("hdr").textContent=fmtDay(now)+(w?" · Week "+w.week:"");
+  const m=document.getElementById("main");
+  m.replaceChildren(...({today:viewToday,sessions:viewSessions,plan:viewPlan,progress:viewProgress}[S.tab])());
+}
+
+/* ---------- exercise display ---------- */
+function exView(ex,key,withSets){
+  const open=S.openEx.has(key);
+  const nSets=parseInt(ex.sets,10);
+  const box=h("div",{class:"ex"+(open?" open":"")});
+  const head=h("div",{class:"head",onclick:()=>{open?S.openEx.delete(key):S.openEx.add(key);render()}},
+    h("div",null,h("div",{class:"name"},ex.name),
+      h("div",{class:"dose"},[ex.sets&&ex.sets+" × "+ex.reps,ex.rest&&"rest "+ex.rest,ex.load].filter(Boolean).join(" · "))),
+    h("span",{class:"chev"},"▶"));
+  box.append(head);
+  const body=h("div",{class:"body"},
+    ex.description?h("div",null,ex.description):h("div",{class:"muted"},"No description yet — add one in Sessions → Edit."),
+    ex.cues&&ex.cues.length?h("ul",null,ex.cues.map(c=>h("li",null,c))):null,
+    ex.notes?h("div",{class:"note"},ex.notes):null);
+  box.append(body);
+  if(withSets&&nSets>0&&nSets<=12){const sk=withSets+"|"+ex.id;const got=S.setsDone[sk]||[];
+    box.append(h("div",{class:"sets"},Array.from({length:nSets},(_,i)=>h("button",{class:"set"+(got[i]?" on":""),title:"Set "+(i+1),
+      onclick:e=>{e.stopPropagation();const a=S.setsDone[sk]||[];a[i]=!a[i];S.setsDone[sk]=a;saveSets();render()}},i+1))))}
+  return box;
+}
+
+/* ---------- TODAY ---------- */
+function viewToday(){
+  const date=parseISO(S.sel),ds=S.sel,isToday=ds===iso(new Date());
+  const item=S.plan.schedule[dow(date)]||{kind:"rest",label:"Rest"};
+  const week=weekFor(date);const out=[];
+  // week strip
+  const mon=mondayOf(date);
+  out.push(h("div",{class:"card"},
+    h("div",{class:"spread"},h("h2",null,week?"Week "+week.week:"This week"),
+      h("div",{class:"row"},h("button",{class:"btn sm ghost",onclick:()=>{S.sel=iso(addDays(date,-7));render()}},"‹ Prev"),
+        h("button",{class:"btn sm ghost",onclick:()=>{S.sel=iso(new Date());render()}},"Today"),
+        h("button",{class:"btn sm ghost",onclick:()=>{S.sel=iso(addDays(date,7));render()}},"Next ›"))),
+    h("div",{class:"strip"},DAYS.map((d,i)=>{const dd=addDays(mon,i),s=iso(dd),it=S.plan.schedule[d]||{};
+      return h("div",{class:"day"+(s===iso(new Date())?" today":""),style:s===ds?"background:var(--accent-soft)":null,onclick:()=>{S.sel=s;render()}},
+        h("div",{class:"d"},d),h("div",{class:"muted small"},dd.getDate()),
+        h("div",{class:"k"},it.kind==="session"?it.ref:it.kind==="run"?"Run":it.kind==="ride"?"Ride":"Rest"),
+        h("div",{class:"tick"},doneOn(s).length?"✓":""))}))));
+  // today's session
+  const done=doneOn(ds);
+  const c=h("div",{class:"card"},
+    h("div",{class:"spread"},h("div",null,h("div",{class:"muted small"},isToday?"Today · "+fmtDay(date):fmtDay(date)),h("h2",null,item.label||"—")),
+      h("span",{class:"tag "+item.kind},item.kind==="session"?"Kettlebells":item.kind)));
+  const pres=prescription(item,week);
+  if(pres)c.append(h("div",{style:"margin-top:8px"},h("b",null,item.kind==="session"?"This week: ":"Plan: "),pres));
+  if(item.kind==="session"){const s=sessionById(item.ref);
+    if(!s)c.append(h("div",{class:"muted"},"Session '"+item.ref+"' not found — fix it in Plan → Weekly schedule."));
+    else{if(s.warmup)c.append(h("div",{class:"muted small",style:"margin-top:6px"},"Warm-up: "+s.warmup));
+      c.append(h("h3",null,s.name+(s.subtitle?" · "+s.subtitle:"")));
+      s.exercises.forEach(ex=>c.append(exView(ex,"t|"+ds+"|"+ex.id,ds+"|"+s.id)))}}
+  if(item.kind==="run")c.append(h("div",{class:"muted small",style:"margin-top:6px"},"Easy = full sentences. Tempo = comfortably hard, ~10k effort. Any ache lasting more than a day: repeat last week's run."));
+  if(item.kind==="ride")c.append(h("div",{class:"muted small",style:"margin-top:6px"},"Take a banana or bar on rides over 90 min."));
+  const doneBtn=done.length
+    ?h("button",{class:"btn",onclick:async()=>{S.log.done=S.log.done.filter(d=>d.date!==ds);await saveLog("Unmarked");render()}},"✓ Done — undo")
+    :h("button",{class:"btn primary",onclick:async()=>{S.log.done.push({date:ds,label:item.label,kind:item.kind});await saveLog("Nice work");render()}},"Mark done");
+  c.append(h("div",{class:"row",style:"margin-top:12px"},doneBtn));
+  out.push(c);
+  // quick weigh-in
+  out.push(weighCard(ds));
+  // targets
+  const t=S.plan.targets;
+  out.push(h("div",{class:"card"},h("h2",null,"Daily targets"),
+    h("div",{class:"stat"},h("div",null,h("b",null,t.kcal),h("span",null,"kcal")),h("div",null,h("b",null,t.protein_g),h("span",null,"g protein")),
+      h("div",null,h("b",null,t.steps),h("span",null,"steps")))));
+  return out;
+}
+
+function weighCard(ds){
+  const existing=S.log.weights.find(w=>w.date===ds);
+  const kg=h("input",{type:"number",step:"0.1",inputmode:"decimal",placeholder:"kg",value:existing?existing.kg:""});
+  const waist=h("input",{type:"number",step:"0.5",inputmode:"decimal",placeholder:"cm (optional)",value:existing&&existing.waist!=null?existing.waist:""});
+  return h("div",{class:"card"},h("h2",null,"Weigh-in · "+fmtShort(parseISO(ds))),
+    h("div",{class:"grid2"},h("div",null,h("label",{class:"f"},"Weight (kg)"),kg),h("div",null,h("label",{class:"f"},"Waist (cm)"),waist)),
+    h("div",{class:"row",style:"margin-top:10px"},h("button",{class:"btn primary",onclick:async()=>{
+      const v=parseFloat(kg.value);if(!(v>20&&v<300)){toast("Enter a weight in kg");return}
+      const wv=waist.value===""?null:parseFloat(waist.value);
+      S.log.weights=S.log.weights.filter(w=>w.date!==ds);S.log.weights.push({date:ds,kg:v,waist:wv});
+      await saveLog("Saved");render()}},existing?"Update":"Save"),
+      h("span",{class:"muted small"},"Target today: "+targetFor(parseISO(ds)).toFixed(1)+" kg")));
+}
+
+/* ---------- SESSIONS ---------- */
+function viewSessions(){
+  if(S.edit)return viewSessionEditor();
+  if(S.libEdit)return viewLibEditor();
+  const out=S.plan.sessions.map(s=>h("div",{class:"card"},
+    h("div",{class:"spread"},h("div",null,h("h2",null,s.name),h("div",{class:"muted small"},s.subtitle||"")),
+      h("button",{class:"btn sm",onclick:()=>{S.edit={id:s.id,work:clone(s),isNew:false};render();scrollTo(0,0)}},"Edit")),
+    s.warmup?h("div",{class:"muted small",style:"margin:6px 0 4px"},"Warm-up: "+s.warmup):null,
+    s.exercises.length?s.exercises.map(ex=>exView(ex,"s|"+s.id+"|"+ex.id)):h("div",{class:"empty"},"No exercises yet."),
+  ));
+  out.push(h("div",{class:"row",style:"margin-bottom:14px"},
+    h("button",{class:"btn primary",onclick:()=>{const used=new Set(S.plan.sessions.map(s=>s.id));let id="C";for(const ch of "CDEFGHIJKLMNOPQRSTUVWXYZ"){if(!used.has(ch)){id=ch;break}}
+      S.edit={id:null,isNew:true,work:{id,name:"Session "+id,subtitle:"",warmup:"",exercises:[]}};render();scrollTo(0,0)}},"+ New session")));
+  // library
+  const lib=h("div",{class:"card"},h("div",{class:"spread"},h("h2",null,"Exercise library"),
+    h("button",{class:"btn sm",onclick:()=>{S.libEdit={idx:-1,work:{name:"",description:"",cues:[]}};render();scrollTo(0,0)}},"+ Add")),
+    h("div",{class:"muted small"},"Templates used when you add an exercise to a session. Tap to read; edit to change."));
+  S.plan.library.forEach((x,i)=>{const key="l|"+i;const open=S.openEx.has(key);
+    lib.append(h("div",{class:"ex"+(open?" open":"")},
+      h("div",{class:"head",onclick:()=>{open?S.openEx.delete(key):S.openEx.add(key);render()}},h("div",{class:"name"},x.name),h("span",{class:"chev"},"▶")),
+      h("div",{class:"body"},h("div",null,x.description),x.cues&&x.cues.length?h("ul",null,x.cues.map(c=>h("li",null,c))):null,
+        h("div",{class:"row",style:"margin-top:8px"},h("button",{class:"btn sm",onclick:()=>{S.libEdit={idx:i,work:clone(x)};render();scrollTo(0,0)}},"Edit")))))});
+  out.push(lib);
+  return out;
+}
+
+function field(label,obj,key,opts={}){
+  const el=opts.area?h("textarea",{placeholder:opts.ph||""}):h("input",{type:"text",placeholder:opts.ph||""});
+  el.value=opts.lines?(obj[key]||[]).join("\n"):(obj[key]??"");
+  el.oninput=()=>{obj[key]=opts.lines?el.value.split("\n").map(s=>s.trim()).filter(Boolean):el.value};
+  if(opts.lines)el.onblur=()=>{};
+  return h("div",null,h("label",{class:"f"},label),el);
+}
+
+function viewSessionEditor(){
+  const e=S.edit,w=e.work;
+  const card=h("div",{class:"card"},h("h2",null,e.isNew?"New session":"Edit "+w.name),
+    h("div",{class:"grid2"},field("Name",w,"name"),field("Subtitle",w,"subtitle",{ph:"e.g. Strength · ~40 min"})),
+    field("Warm-up",w,"warmup"),
+    h("h3",null,"Exercises"));
+  if(!w.exercises.length)card.append(h("div",{class:"empty"},"No exercises — add one below."));
+  w.exercises.forEach((ex,i)=>{
+    const mv=d=>{const j=i+d;if(j<0||j>=w.exercises.length)return;[w.exercises[i],w.exercises[j]]=[w.exercises[j],w.exercises[i]];render()};
+    card.append(h("div",{class:"ed-ex"},
+      h("div",{class:"spread"},h("b",null,(i+1)+". "+(ex.name||"Untitled")),
+        h("div",{class:"tools"},h("button",{class:"btn sm ghost",title:"Move up",disabled:i===0,onclick:()=>mv(-1)},"↑"),
+          h("button",{class:"btn sm ghost",title:"Move down",disabled:i===w.exercises.length-1,onclick:()=>mv(1)},"↓"),
+          h("button",{class:"btn sm danger",onclick:()=>{if(confirm("Remove "+(ex.name||"this exercise")+"?")){w.exercises.splice(i,1);render()}}},"Remove"))),
+      field("Exercise",ex,"name"),
+      h("div",{class:"grid4"},field("Sets",ex,"sets"),field("Reps / time",ex,"reps"),field("Rest",ex,"rest"),field("Load",ex,"load",{ph:"e.g. 16 kg"})),
+      field("Notes",ex,"notes",{ph:"Shown highlighted under the description"}),
+      field("Description",ex,"description",{area:true}),
+      field("Coaching cues (one per line)",ex,"cues",{area:true,lines:true})));
+  });
+  // add exercise
+  const sel=h("select",null,h("option",{value:""},"Blank exercise"),S.plan.library.map((x,i)=>h("option",{value:String(i)},x.name)));
+  card.append(h("div",{class:"ed-ex"},h("label",{class:"f"},"Add an exercise"),
+    h("div",{class:"row",style:"flex-wrap:nowrap"},sel,h("button",{class:"btn",onclick:()=>{
+      const t=sel.value===""?{name:"",description:"",cues:[]}:S.plan.library[+sel.value];
+      w.exercises.push({id:uid(),name:t.name,sets:"3",reps:"10",rest:"60 s",load:"",notes:"",description:t.description,cues:clone(t.cues||[])});render()}},"Add"))));
+  card.append(h("div",{class:"row",style:"margin-top:12px;justify-content:space-between"},
+    h("div",{class:"row"},h("button",{class:"btn primary",onclick:async()=>{
+        if(!w.name.trim()){toast("Give the session a name");return}
+        if(e.isNew)S.plan.sessions.push(w);else S.plan.sessions[S.plan.sessions.findIndex(s=>s.id===e.id)]=w;
+        await savePlan("Session saved");S.edit=null;render()}},"Save"),
+      h("button",{class:"btn",onclick:()=>{S.edit=null;render()}},"Cancel")),
+    e.isNew?null:h("button",{class:"btn danger",onclick:async()=>{
+      const usedBy=DAYS.filter(d=>S.plan.schedule[d]&&S.plan.schedule[d].kind==="session"&&S.plan.schedule[d].ref===e.id);
+      if(!confirm("Delete "+w.name+"?"+(usedBy.length?"\nIt is scheduled on "+usedBy.join(", ")+"; those days will become rest days.":"")))return;
+      S.plan.sessions=S.plan.sessions.filter(s=>s.id!==e.id);
+      usedBy.forEach(d=>S.plan.schedule[d]={kind:"rest",ref:"",label:"Rest"});
+      await savePlan("Session deleted");S.edit=null;render()}},"Delete session")));
+  return [card];
+}
+
+function viewLibEditor(){
+  const e=S.libEdit,w=e.work;
+  return [h("div",{class:"card"},h("h2",null,e.idx<0?"New library exercise":"Edit "+w.name),
+    field("Name",w,"name"),field("Description",w,"description",{area:true}),field("Coaching cues (one per line)",w,"cues",{area:true,lines:true}),
+    h("div",{class:"muted small",style:"margin-top:6px"},"Changing a library entry doesn't alter exercises already in sessions."),
+    h("div",{class:"row",style:"margin-top:12px;justify-content:space-between"},
+      h("div",{class:"row"},h("button",{class:"btn primary",onclick:async()=>{if(!w.name.trim()){toast("Name it first");return}
+          if(e.idx<0)S.plan.library.push(w);else S.plan.library[e.idx]=w;
+          S.plan.library.sort((a,b)=>a.name.localeCompare(b.name));await savePlan("Library saved");S.libEdit=null;render()}},"Save"),
+        h("button",{class:"btn",onclick:()=>{S.libEdit=null;render()}},"Cancel")),
+      e.idx<0?null:h("button",{class:"btn danger",onclick:async()=>{if(!confirm("Delete "+w.name+" from the library?"))return;
+        S.plan.library.splice(e.idx,1);await savePlan("Deleted");S.libEdit=null;render()}},"Delete")))];
+}
+
+/* ---------- PLAN ---------- */
+function viewPlan(){
+  const p=S.plan,out=[];
+  // targets
+  const t=p.targets;
+  const tIn=(label,key,type="text")=>{const el=h("input",{type,step:"0.1",value:t[key]});el.onchange=async()=>{t[key]=type==="number"?parseFloat(el.value):el.value;await savePlan("Saved");render()};return h("div",null,h("label",{class:"f"},label),el)};
+  out.push(h("div",{class:"card"},h("h2",null,"Targets"),
+    h("div",{class:"grid2"},tIn("Start weight (kg)","start_weight","number"),tIn("Start date","start_date","date"),
+      tIn("Goal weight (kg)","goal_weight","number"),tIn("Planned loss per week (kg)","weekly_loss","number"),
+      tIn("Calories / day","kcal"),tIn("Protein (g) / day","protein_g"),tIn("Steps / day","steps"))));
+  // schedule
+  const sc=h("div",{class:"card"},h("h2",null,"Weekly schedule"),h("div",{class:"muted small"},"Pick what happens each day. Kettlebell days link to a session."));
+  const opts=[...p.sessions.map(s=>["session:"+s.id,"Kettlebell: "+s.name]),["run:easy","Easy run"],["run:quality","Quality run"],["ride:ride","Long ride"],["rest:","Rest"]];
+  DAYS.forEach(d=>{const it=p.schedule[d]||{kind:"rest",ref:"",label:"Rest"};
+    const sel=h("select",null,opts.map(([v,l])=>h("option",{value:v},l)));sel.value=it.kind+":"+(it.ref||"");
+    const lab=h("input",{type:"text",value:it.label||""});
+    sel.onchange=async()=>{const[k,r]=sel.value.split(":");const def=opts.find(o=>o[0]===sel.value)[1].replace("Kettlebell: ","Kettlebell ");
+      p.schedule[d]={kind:k,ref:r,label:def};await savePlan("Saved");render()};
+    lab.onchange=async()=>{p.schedule[d]={...it,label:lab.value};await savePlan("Saved")};
+    sc.append(h("div",{class:"grid2",style:"grid-template-columns:52px 1fr 1fr;align-items:center;margin-top:8px"},h("b",null,d),sel,lab))});
+  out.push(sc);
+  // weeks
+  const wk=h("div",{class:"card"},h("h2",null,"Week by week"),h("div",{class:"muted small"},"Edit any cell; changes save when you leave the field. Today's prescription comes from the week whose start date is most recent."));
+  const cols=[["week","Wk",50],["start","Starts (Mon)",130],["easy","Easy run",170],["quality","Quality run",190],["ride","Long ride",160],["kb","Kettlebells",190]];
+  const tb=h("tbody");
+  p.weeks.forEach((w,i)=>{tb.append(h("tr",null,cols.map(([k,,wd])=>{const el=h("input",{type:k==="start"?"date":k==="week"?"number":"text",value:w[k],style:"min-width:"+wd+"px"});
+      el.onchange=async()=>{w[k]=k==="week"?parseInt(el.value,10):el.value;await savePlan("Saved")};return h("td",null,el)}),
+    h("td",null,h("button",{class:"btn sm ghost",title:"Remove week",onclick:async()=>{if(!confirm("Remove week "+w.week+"?"))return;p.weeks.splice(i,1);await savePlan("Removed");render()}},"✕"))))});
+  wk.append(h("div",{class:"tablewrap"},h("table",null,h("thead",null,h("tr",null,cols.map(c=>h("th",null,c[1])),h("th"))),tb)));
+  wk.append(h("div",{class:"row",style:"margin-top:10px"},h("button",{class:"btn",onclick:async()=>{const last=p.weeks[p.weeks.length-1];
+    p.weeks.push(last?{...last,week:last.week+1,start:iso(addDays(parseISO(last.start),7))}:{week:1,start:iso(mondayOf(new Date())),easy:"",quality:"",ride:"",kb:""});
+    await savePlan("Week added");render()}},"+ Add week")));
+  out.push(wk);
+  out.push(h("div",{class:"card"},h("h2",null,"Reset"),h("div",{class:"muted small"},"Restore the original 6-week plan. Your weigh-ins and completed sessions are kept; the current plan is backed up on the server."),
+    h("div",{class:"row",style:"margin-top:10px"},h("button",{class:"btn danger",onclick:async()=>{if(!confirm("Replace the whole plan with the original defaults?"))return;
+      S.plan=await jsend("plan/reset","POST");toast("Plan reset");render()}},"Reset plan to defaults"))));
+  return out;
+}
+
+/* ---------- PROGRESS ---------- */
+function weeklyRows(){
+  const ws=S.log.weights;if(!ws.length)return[];
+  const first=mondayOf(parseISO(S.plan.targets.start_date));const last=mondayOf(new Date());
+  const rows=[];
+  for(let m=first;m<=last;m=addDays(m,7)){const end=addDays(m,6),a=iso(m),b=iso(end);
+    const inWk=ws.filter(w=>w.date>=a&&w.date<=b);const waists=inWk.filter(w=>w.waist!=null);
+    rows.push({end,avg:inWk.length?inWk.reduce((s,w)=>s+w.kg,0)/inWk.length:null,n:inWk.length,
+      waist:waists.length?waists[waists.length-1].waist:null,target:targetFor(end),
+      done:S.log.done.filter(d=>d.date>=a&&d.date<=b).length})}
+  return rows.reverse();
+}
+function chart(){
+  const ws=S.log.weights;const t=S.plan.targets;
+  const W=680,H=230,P={l:38,r:12,t:12,b:26};
+  const start=parseISO(t.start_date);
+  const lastDate=ws.length?parseISO(ws[ws.length-1].date):start;
+  const endGoal=addDays(start,Math.ceil((t.start_weight-t.goal_weight)/t.weekly_loss*7));
+  const x1=new Date(Math.max(addDays(lastDate,14),addDays(start,49)));const x0=addDays(start,-2);
+  const xEnd=x1>endGoal?endGoal:x1;
+  const vals=ws.map(w=>w.kg).concat([t.goal_weight,t.start_weight]);
+  const y0=Math.floor(Math.min(...vals)-.5),y1=Math.ceil(Math.max(...vals)+.5);
+  const X=d=>P.l+(d-x0)/(x1-x0)*(W-P.l-P.r),Y=v=>P.t+(y1-v)/(y1-y0)*(H-P.t-P.b);
+  const ns="http://www.w3.org/2000/svg";const s=(tag,a)=>{const e=document.createElementNS(ns,tag);for(const k in a)e.setAttribute(k,a[k]);return e};
+  const svg=s("svg",{viewBox:`0 0 ${W} ${H}`,width:"100%",role:"img","aria-label":"Weight chart"});
+  for(let v=y0;v<=y1;v++){svg.append(s("line",{x1:P.l,x2:W-P.r,y1:Y(v),y2:Y(v),stroke:"var(--line)","stroke-width":1}));
+    const tx=s("text",{x:P.l-6,y:Y(v)+4,"text-anchor":"end"});tx.textContent=v;svg.append(tx)}
+  for(let d=mondayOf(addDays(x0,7));d<=x1;d=addDays(d,14)){const tx=s("text",{x:X(d),y:H-8,"text-anchor":"middle"});tx.textContent=fmtShort(d);svg.append(tx)}
+  // goal + target
+  svg.append(s("line",{x1:P.l,x2:W-P.r,y1:Y(t.goal_weight),y2:Y(t.goal_weight),stroke:"var(--accent)","stroke-dasharray":"2 4","stroke-width":1.5}));
+  const g=s("text",{x:W-P.r,y:Y(t.goal_weight)-5,"text-anchor":"end"});g.textContent="Goal "+t.goal_weight+" kg";svg.append(g);
+  svg.append(s("line",{x1:X(start),y1:Y(t.start_weight),x2:X(xEnd),y2:Y(targetFor(xEnd)),stroke:"var(--muted)","stroke-dasharray":"6 5","stroke-width":1.5}));
+  // 7-day rolling average
+  if(ws.length>1){const pts=ws.map(w=>{const d=parseISO(w.date);const win=ws.filter(o=>{const od=parseISO(o.date);return od<=d&&od>addDays(d,-7)});
+      return[X(d),Y(win.reduce((a,o)=>a+o.kg,0)/win.length)]});
+    svg.append(s("polyline",{points:pts.map(p=>p.join(",")).join(" "),fill:"none",stroke:"var(--accent)","stroke-width":2.5,"stroke-linejoin":"round","stroke-linecap":"round"}))}
+  ws.forEach(w=>svg.append(s("circle",{cx:X(parseISO(w.date)),cy:Y(w.kg),r:3,fill:"var(--card)",stroke:"var(--accent)","stroke-width":1.5})));
+  return svg;
+}
+function viewProgress(){
+  const ws=S.log.weights,t=S.plan.targets,out=[];
+  const latest=ws[ws.length-1];
+  const last7=ws.filter(w=>parseISO(w.date)>addDays(new Date(),-7));
+  const avg=last7.length?last7.reduce((a,w)=>a+w.kg,0)/last7.length:null;
+  const firstWaist=ws.find(w=>w.waist!=null),lastWaist=[...ws].reverse().find(w=>w.waist!=null);
+  out.push(h("div",{class:"card"},h("h2",null,"Progress"),
+    h("div",{class:"stat"},
+      h("div",null,h("b",{class:"num"},avg?avg.toFixed(1):"—"),h("span",null,"7-day avg kg")),
+      h("div",null,h("b",{class:"num"},latest?(latest.kg-t.start_weight).toFixed(1):"—"),h("span",null,"kg since start")),
+      h("div",null,h("b",{class:"num"},avg?Math.max(0,avg-t.goal_weight).toFixed(1):"—"),h("span",null,"kg to goal")),
+      h("div",null,h("b",{class:"num"},lastWaist&&firstWaist&&lastWaist!==firstWaist?(lastWaist.waist-firstWaist.waist).toFixed(1):(lastWaist?lastWaist.waist:"—")),
+        h("span",null,lastWaist&&firstWaist&&lastWaist!==firstWaist?"cm waist change":"cm waist"))),
+    h("div",{style:"margin-top:8px"},chart()),
+    h("div",{class:"muted small"},"Dots: weigh-ins · solid line: 7-day average · dashed: planned path to goal")));
+  out.push(weighCard(iso(new Date())));
+  // weekly table
+  const rows=weeklyRows();
+  out.push(h("div",{class:"card"},h("h2",null,"Weekly summary"),
+    rows.length?h("div",{class:"tablewrap"},h("table",null,h("thead",null,h("tr",null,["Week ending","Target","Avg","Waist","Sessions"].map(x=>h("th",null,x)))),
+      h("tbody",null,rows.map(r=>h("tr",null,h("td",null,fmtShort(r.end)),h("td",{class:"num"},r.target.toFixed(1)),
+        h("td",{class:"num "+(r.avg==null?"":r.avg<=r.target+0.2?"good":"bad")},r.avg==null?"—":r.avg.toFixed(1)+(r.n?" ("+r.n+")":"")),
+        h("td",{class:"num"},r.waist??"—"),h("td",{class:"num"},r.done+" / 6")))))):h("div",{class:"empty"},"No weigh-ins yet.")));
+  // entries
+  const ent=h("div",{class:"card"},h("h2",null,"Weigh-ins"));
+  if(!ws.length)ent.append(h("div",{class:"empty"},"Nothing logged yet."));
+  [...ws].reverse().forEach(w=>ent.append(h("div",{class:"spread",style:"border-top:1px solid var(--line);padding:8px 0"},
+    h("span",null,fmtDay(parseISO(w.date))),h("span",{class:"num"},w.kg.toFixed(1)+" kg"+(w.waist!=null?" · "+w.waist+" cm":"")),
+    h("button",{class:"btn sm ghost",onclick:async()=>{if(!confirm("Delete the "+w.date+" entry?"))return;S.log.weights=S.log.weights.filter(x=>x.date!==w.date);await saveLog("Deleted");render()}},"✕"))));
+  out.push(ent);
+  return out;
+}
+
+/* ---------- boot ---------- */
+(async()=>{try{[S.plan,S.log]=await Promise.all([jget("plan"),jget("log")]);render()}
+  catch(e){document.getElementById("main").replaceChildren(h("div",{class:"card"},h("h2",null,"Couldn't load"),h("div",{class:"muted"},String(e.message||e))))}})();
+</script>
+</body>
+</html>

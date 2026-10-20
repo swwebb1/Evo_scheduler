@@ -1,0 +1,20 @@
+name: Fit Plan
+version: "0.1.0"
+slug: fit_plan
+description: >-
+  Personal training plan — editable kettlebell sessions with exercise
+  descriptions, running and cycling progression, and a weight and waist tracker.
+url: "https://github.com/swwebb1/Evo_scheduler"
+arch:
+  - aarch64
+  - amd64
+  - armv7
+init: false
+ingress: true
+ingress_port: 8098
+panel_icon: mdi:kettlebell
+panel_title: Fit Plan
+boot: auto
+startup: application
+hassio_api: false
+homeassistant_api: false
