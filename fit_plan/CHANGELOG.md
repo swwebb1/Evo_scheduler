@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0
+- Runs now record distance and time: log them on the Today tab on a run day (pace is worked out for you),
+  edit or remove them later.
+- Progress tab: new Runs card with km this week, total km, average pace over the last 4 runs, and a run
+  log; "+ Add run" for runs on other days. Weekly summary gains a Run km column.
+
 ## 0.3.0
 - Technique review against published sources (ACE, NSCA, NASM, StrongFirst, McGill Big 3, physio sheets);
   descriptions and cues rewritten, with source links on every exercise.

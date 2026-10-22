@@ -148,7 +148,7 @@ const fmtDay=d=>d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",mont
 const fmtShort=d=>d.toLocaleDateString("en-GB",{day:"numeric",month:"short"});
 
 /* ---------- state ---------- */
-const S={plan:null,log:null,tab:"today",playing:null,edit:null,libEdit:null,openEx:new Set(),sel:iso(new Date()),
+const S={plan:null,log:null,tab:"today",editRun:false,addRun:false,playing:null,edit:null,libEdit:null,openEx:new Set(),sel:iso(new Date()),
   setsDone:(()=>{try{return JSON.parse(localStorage.getItem("fitplan.sets")||"{}")}catch{return{}}})()};
 function saveSets(){try{localStorage.setItem("fitplan.sets",JSON.stringify(S.setsDone))}catch{}}
 
@@ -161,6 +161,34 @@ function targetFor(date){const t=S.plan.targets;const days=(date-parseISO(t.star
   return Math.max(Number(t.goal_weight),Number(t.start_weight)-Number(t.weekly_loss)*days/7)}
 function sessionById(id){return S.plan.sessions.find(s=>s.id===id)}
 function doneOn(dateStr){return S.log.done.filter(d=>d.date===dateStr)}
+/* ---------- runs ---------- */
+function parseDur(str){str=String(str||"").trim().replace(/[.,](?=\d{2}$)/,":");if(!str)return null;
+  const p=str.split(":").map(x=>x.trim());if(p.some(x=>x===""||isNaN(+x)))return null;
+  let sec;if(p.length===1)sec=+p[0]*60;else if(p.length===2)sec=+p[0]*60+ +p[1];else if(p.length===3)sec=+p[0]*3600+ +p[1]*60+ +p[2];else return null;
+  return sec>0&&sec<86400?Math.round(sec):null}
+function fmtDur(sec){if(sec==null)return"—";sec=Math.round(sec);const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),x=sec%60;
+  return(h?h+":"+String(m).padStart(2,"0"):m)+":"+String(x).padStart(2,"0")}
+function fmtPace(km,sec){return km>0&&sec>0?fmtDur(sec/km)+" /km":"—"}
+const runs=()=>S.log.done.filter(d=>d.kind==="run"&&d.km>0).sort((a,b)=>a.date<b.date?-1:1);
+function runForm(ds,label,existing,onDone){
+  const km=h("input",{type:"number",step:"0.01",min:"0",inputmode:"decimal",placeholder:"e.g. 5.2",value:existing&&existing.km?existing.km:""});
+  const tm=h("input",{type:"text",inputmode:"numeric",placeholder:"mm:ss or h:mm:ss",value:existing&&existing.secs?fmtDur(existing.secs):""});
+  const pace=h("span",{class:"muted small"});
+  const upd=()=>{const k=parseFloat(km.value),t=parseDur(tm.value);pace.textContent=k>0&&t?"Pace "+fmtPace(k,t):""};
+  km.oninput=upd;tm.oninput=upd;upd();
+  const save=h("button",{class:"btn primary",onclick:async()=>{
+    const k=parseFloat(km.value),t=parseDur(tm.value);
+    if(!(k>0&&k<200)){toast("Enter the distance in km");return}
+    if(!t){toast("Enter the time, e.g. 28:30");return}
+    const day=typeof ds==="function"?ds():ds;if(!day){toast("Pick a date");return}
+    const it=S.plan.schedule[dow(parseISO(day))];
+    const lab=label||(it&&it.kind==="run"?it.label:"Run");
+    S.log.done=S.log.done.filter(d=>!(d.date===day&&d.kind==="run"));
+    S.log.done.push({date:day,label:lab,kind:"run",km:Math.round(k*100)/100,secs:t});
+    await saveLog("Run saved · "+fmtPace(k,t));if(onDone)onDone();render()}},existing?"Update run":"Save run");
+  return h("div",null,h("div",{class:"grid2"},h("div",null,h("label",{class:"f"},"Distance (km)"),km),h("div",null,h("label",{class:"f"},"Time"),tm)),
+    h("div",{class:"row",style:"margin-top:10px"},save,pace));
+}
 function prescription(item,week){if(!week)return"";
   if(item.kind==="run")return item.ref==="quality"?week.quality:week.easy;
   if(item.kind==="ride")return week.ride;if(item.kind==="session")return week.kb;return""}
@@ -168,6 +196,7 @@ function prescription(item,week){if(!week)return"";
 /* ---------- render shell ---------- */
 const TABS=[["today","Today"],["sessions","Sessions"],["plan","Plan"],["progress","Progress"]];
 function render(){
+  if(S._sel!==S.sel||S._tab!==S.tab){S.editRun=false;S._sel=S.sel;S._tab=S.tab}
   const tabs=document.getElementById("tabs");tabs.replaceChildren(...TABS.map(([k,l])=>h("button",{class:S.tab===k?"on":"",onclick:()=>{S.tab=k;S.edit=null;S.libEdit=null;render();scrollTo(0,0)}},l)));
   const now=new Date(),w=weekFor(now);
   document.getElementById("hdr").textContent=fmtDay(now)+(w?" · Week "+w.week:"");
@@ -264,6 +293,18 @@ function viewToday(){
       s.exercises.forEach(ex=>c.append(exView(ex,"t|"+ds+"|"+ex.id,ds+"|"+s.id)))}}
   if(item.kind==="run")c.append(h("div",{class:"muted small",style:"margin-top:6px"},"Easy = full sentences. Tempo = comfortably hard, ~10k effort. Any ache lasting more than a day: repeat last week's run."));
   if(item.kind==="ride")c.append(h("div",{class:"muted small",style:"margin-top:6px"},"Take a banana or bar on rides over 90 min."));
+  const run=item.kind==="run"?done.find(d=>d.kind==="run"):null;
+  if(item.kind==="run"){
+    c.append(h("h3",null,run&&run.km?"Your run":"Log your run"));
+    if(run&&run.km&&!S.editRun){
+      c.append(h("div",{class:"stat"},h("div",null,h("b",{class:"num"},run.km.toFixed(2)),h("span",null,"km")),
+        h("div",null,h("b",{class:"num"},fmtDur(run.secs)),h("span",null,"time")),
+        h("div",null,h("b",{class:"num"},fmtPace(run.km,run.secs).replace(" /km","")),h("span",null,"min/km"))),
+        h("div",{class:"row",style:"margin-top:10px"},h("button",{class:"btn",onclick:()=>{S.editRun=true;render()}},"Edit"),
+          h("button",{class:"btn ghost",onclick:async()=>{if(!confirm("Remove this run?"))return;S.log.done=S.log.done.filter(d=>d.date!==ds);await saveLog("Removed");render()}},"Remove")));
+    } else c.append(runForm(ds,item.label,run,()=>{S.editRun=false}));
+    out.push(c);out.push(weighCard(ds));return out;
+  }
   const doneBtn=done.length
     ?h("button",{class:"btn",onclick:async()=>{S.log.done=S.log.done.filter(d=>d.date!==ds);await saveLog("Unmarked");render()}},"✓ Done — undo")
     :h("button",{class:"btn primary",onclick:async()=>{S.log.done.push({date:ds,label:item.label,kind:item.kind});await saveLog("Nice work");render()}},"Mark done");
@@ -420,14 +461,15 @@ function viewPlan(){
 
 /* ---------- PROGRESS ---------- */
 function weeklyRows(){
-  const ws=S.log.weights;if(!ws.length)return[];
+  const ws=S.log.weights;if(!ws.length&&!runs().length)return[];
   const first=mondayOf(parseISO(S.plan.targets.start_date));const last=mondayOf(new Date());
   const rows=[];
   for(let m=first;m<=last;m=addDays(m,7)){const end=addDays(m,6),a=iso(m),b=iso(end);
     const inWk=ws.filter(w=>w.date>=a&&w.date<=b);const waists=inWk.filter(w=>w.waist!=null);
     rows.push({end,avg:inWk.length?inWk.reduce((s,w)=>s+w.kg,0)/inWk.length:null,n:inWk.length,
       waist:waists.length?waists[waists.length-1].waist:null,target:targetFor(end),
-      done:S.log.done.filter(d=>d.date>=a&&d.date<=b).length})}
+      done:S.log.done.filter(d=>d.date>=a&&d.date<=b).length,
+      runKm:S.log.done.filter(d=>d.kind==="run"&&d.km>0&&d.date>=a&&d.date<=b).reduce((x,d)=>x+d.km,0)})}
   return rows.reverse();
 }
 function chart(){
@@ -476,10 +518,11 @@ function viewProgress(){
   // weekly table
   const rows=weeklyRows();
   out.push(h("div",{class:"card"},h("h2",null,"Weekly summary"),
-    rows.length?h("div",{class:"tablewrap"},h("table",null,h("thead",null,h("tr",null,["Week ending","Target","Avg","Waist","Sessions"].map(x=>h("th",null,x)))),
+    rows.length?h("div",{class:"tablewrap"},h("table",null,h("thead",null,h("tr",null,["Week ending","Target","Avg","Waist","Run km","Sessions"].map(x=>h("th",null,x)))),
       h("tbody",null,rows.map(r=>h("tr",null,h("td",null,fmtShort(r.end)),h("td",{class:"num"},r.target.toFixed(1)),
         h("td",{class:"num "+(r.avg==null?"":r.avg<=r.target+0.2?"good":"bad")},r.avg==null?"—":r.avg.toFixed(1)+(r.n?" ("+r.n+")":"")),
-        h("td",{class:"num"},r.waist??"—"),h("td",{class:"num"},r.done+" / 6")))))):h("div",{class:"empty"},"No weigh-ins yet.")));
+        h("td",{class:"num"},r.waist??"—"),h("td",{class:"num"},r.runKm?r.runKm.toFixed(1):"—"),h("td",{class:"num"},r.done+" / 6")))))):h("div",{class:"empty"},"No weigh-ins yet.")));
+  out.push(runsCard());
   // entries
   const ent=h("div",{class:"card"},h("h2",null,"Weigh-ins"));
   if(!ws.length)ent.append(h("div",{class:"empty"},"Nothing logged yet."));
@@ -488,6 +531,29 @@ function viewProgress(){
     h("button",{class:"btn sm ghost",onclick:async()=>{if(!confirm("Delete the "+w.date+" entry?"))return;S.log.weights=S.log.weights.filter(x=>x.date!==w.date);await saveLog("Deleted");render()}},"✕"))));
   out.push(ent);
   return out;
+}
+
+function runsCard(){
+  const rs=runs(),card=h("div",{class:"card"});
+  const wkStart=iso(mondayOf(new Date()));
+  const wk=rs.filter(r=>r.date>=wkStart),totKm=rs.reduce((a,r)=>a+r.km,0);
+  const last4=rs.slice(-4),l4km=last4.reduce((a,r)=>a+r.km,0),l4s=last4.reduce((a,r)=>a+r.secs,0);
+  card.append(h("div",{class:"spread"},h("h2",null,"Runs"),
+    h("button",{class:"btn sm",onclick:()=>{S.addRun=!S.addRun;render()}},S.addRun?"Cancel":"+ Add run")));
+  if(S.addRun){const d=h("input",{type:"date",value:iso(new Date())});
+    card.append(h("div",{class:"ed-ex"},h("label",{class:"f"},"Date"),d,
+      h("div",{style:"margin-top:4px"},runForm(()=>d.value,null,null,()=>{S.addRun=false}))));}
+  card.append(h("div",{class:"stat"},
+    h("div",null,h("b",{class:"num"},wk.reduce((a,r)=>a+r.km,0).toFixed(1)),h("span",null,"km this week")),
+    h("div",null,h("b",{class:"num"},totKm.toFixed(1)),h("span",null,"km total ("+rs.length+" runs)")),
+    h("div",null,h("b",{class:"num"},l4km?fmtPace(l4km,l4s).replace(" /km",""):"—"),h("span",null,"avg pace, last 4 (min/km)"))));
+  if(!rs.length){card.append(h("div",{class:"empty"},"No runs logged yet — log one from the Today tab on a run day, or add one here."));return card}
+  card.append(h("div",{class:"tablewrap"},h("table",null,h("thead",null,h("tr",null,["Date","Run","km","Time","Pace",""].map(x=>h("th",null,x)))),
+    h("tbody",null,[...rs].reverse().map(r=>h("tr",null,h("td",null,fmtShort(parseISO(r.date))),h("td",{class:"small"},(r.label||"Run").replace(/\s*\(.*\)\s*/,"")),
+      h("td",{class:"num"},r.km.toFixed(2)),h("td",{class:"num"},fmtDur(r.secs)),h("td",{class:"num"},fmtPace(r.km,r.secs).replace(" /km","")),
+      h("td",{style:"white-space:nowrap"},h("button",{class:"btn sm ghost",title:"Edit on the Today tab",onclick:()=>{S.sel=r.date;S.tab="today";render();S.editRun=true;render();scrollTo(0,0)}},"✎"),
+        h("button",{class:"btn sm ghost",title:"Delete",onclick:async()=>{if(!confirm("Delete the "+r.date+" run?"))return;S.log.done=S.log.done.filter(x=>!(x.date===r.date&&x.kind==="run"));await saveLog("Deleted");render()}},"✕"))))))));
+  return card;
 }
 
 /* ---------- boot ---------- */
