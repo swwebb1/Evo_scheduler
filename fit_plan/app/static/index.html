@@ -107,6 +107,11 @@ svg text{fill:var(--muted);font-size:11px}
 .demo-bell-handle{fill:none;stroke:var(--accent);stroke-width:2.5}
 .demo-dowel{stroke:var(--accent);stroke-width:2;stroke-dasharray:5 4}
 .demo-note{fill:var(--muted);font-size:9px}
+.tbox{display:flex;align-items:center;gap:4px}
+.tbox span{font-weight:700;color:var(--muted)}
+.tbox input.tpart{text-align:center;padding:9px 4px;min-width:0}
+.tbox input.tpart::-webkit-inner-spin-button,.tbox input.tpart::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.tbox input.tpart{-moz-appearance:textfield;appearance:textfield}
 .src{margin-top:8px;font-size:12.5px;color:var(--muted)}
 .src a{color:var(--accent);text-decoration:none}
 .src a:hover{text-decoration:underline}
@@ -172,21 +177,29 @@ function fmtPace(km,sec){return km>0&&sec>0?fmtDur(sec/km)+" /km":"—"}
 const runs=()=>S.log.done.filter(d=>d.kind==="run"&&d.km>0).sort((a,b)=>a.date<b.date?-1:1);
 function runForm(ds,label,existing,onDone){
   const km=h("input",{type:"number",step:"0.01",min:"0",inputmode:"decimal",placeholder:"e.g. 5.2",value:existing&&existing.km?existing.km:""});
-  const tm=h("input",{type:"text",inputmode:"numeric",placeholder:"mm:ss or h:mm:ss",value:existing&&existing.secs?fmtDur(existing.secs):""});
+  const es=existing&&existing.secs?existing.secs:null;
+  const part=(ph,max,val)=>{const e=h("input",{type:"number",inputmode:"numeric",min:"0",max:String(max),step:"1",placeholder:ph,class:"tpart",
+      value:val==null?"":String(val).padStart(ph==="hh"?1:2,"0")});
+    e.onfocus=()=>e.select();return e};
+  const th=part("hh",23,es?Math.floor(es/3600):null),tmn=part("mm",59,es?Math.floor(es%3600/60):null),tsc=part("ss",59,es?es%60:null);
+  const secsOf=()=>{const v=[th,tmn,tsc].map(e=>e.value.trim());if(v.every(x=>x===""))return null;
+    const [H,M,Sx]=v.map(x=>x===""?0:Number(x));if([H,M,Sx].some(x=>!Number.isInteger(x)||x<0)||M>59||Sx>59)return null;
+    const t=H*3600+M*60+Sx;return t>0?t:null};
+  const tm=h("div",{class:"tbox"},th,h("span",null,":"),tmn,h("span",null,":"),tsc);
   const pace=h("span",{class:"muted small"});
-  const upd=()=>{const k=parseFloat(km.value),t=parseDur(tm.value);pace.textContent=k>0&&t?"Pace "+fmtPace(k,t):""};
-  km.oninput=upd;tm.oninput=upd;upd();
+  const upd=()=>{const k=parseFloat(km.value),t=secsOf();pace.textContent=k>0&&t?"Pace "+fmtPace(k,t):""};
+  [km,th,tmn,tsc].forEach(e=>e.oninput=upd);upd();
   const save=h("button",{class:"btn primary",onclick:async()=>{
-    const k=parseFloat(km.value),t=parseDur(tm.value);
+    const k=parseFloat(km.value),t=secsOf();
     if(!(k>0&&k<200)){toast("Enter the distance in km");return}
-    if(!t){toast("Enter the time, e.g. 28:30");return}
+    if(!t){toast("Enter the time as hh : mm : ss (minutes and seconds 0–59)");return}
     const day=typeof ds==="function"?ds():ds;if(!day){toast("Pick a date");return}
     const it=S.plan.schedule[dow(parseISO(day))];
     const lab=label||(it&&it.kind==="run"?it.label:"Run");
     S.log.done=S.log.done.filter(d=>!(d.date===day&&d.kind==="run"));
     S.log.done.push({date:day,label:lab,kind:"run",km:Math.round(k*100)/100,secs:t});
     await saveLog("Run saved · "+fmtPace(k,t));if(onDone)onDone();render()}},existing?"Update run":"Save run");
-  return h("div",null,h("div",{class:"grid2"},h("div",null,h("label",{class:"f"},"Distance (km)"),km),h("div",null,h("label",{class:"f"},"Time"),tm)),
+  return h("div",null,h("div",{class:"grid2"},h("div",null,h("label",{class:"f"},"Distance (km)"),km),h("div",null,h("label",{class:"f"},"Time (hh : mm : ss)"),tm)),
     h("div",{class:"row",style:"margin-top:10px"},save,pace));
 }
 function prescription(item,week){if(!week)return"";

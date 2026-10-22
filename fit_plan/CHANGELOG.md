@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.1
+- Run time is entered as separate hours : minutes : seconds boxes (works with the iPhone/iPad number pad).
+
 ## 0.4.0
 - Runs now record distance and time: log them on the Today tab on a run day (pace is worked out for you),
   edit or remove them later.
